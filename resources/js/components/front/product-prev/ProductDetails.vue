@@ -363,12 +363,18 @@
 import { EventBus } from "../../../vue-assets";
 import Mixin from "../../../mixin";
 import SingleProduct from "./SingleProduct";
+import { useCartStore, storeToRefs } from '../../../../store/index';
 
 export default {
   props: ["currency", "product","shop_info"],
   mixins: [Mixin],
   components: {
     "single-product": SingleProduct,
+  },
+  setup() {
+    const cartStore = useCartStore();
+    const { cart_count, cart_total, cart_items, isLoading, trial_count, trial_total, isTrialLoading, trial_items } = storeToRefs(cartStore);
+    return { cart_count, cart_total, cart_items, isLoading, trial_count, trial_total, isTrialLoading, trial_items, cartStore };
   },
   data() {
     return {
@@ -452,8 +458,7 @@ export default {
             this.successMessage(response.data);
             // }
 
-            // dispatch a store commit
-            this.$store.dispatch("getCart");
+            this.cartStore.getCart();
           } else {
             this.successMessage(response.data);
           }
@@ -502,8 +507,7 @@ export default {
         .then((response) => {
           if (response.data.status === "success") {
             this.successMessage(response.data);
-            // dispatch a store commit
-            this.$store.dispatch("getTrial");
+            this.cartStore.getTrial();
           } else {
             this.validationError(response.data.message);
           }

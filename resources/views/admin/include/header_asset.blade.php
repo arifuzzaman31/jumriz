@@ -13,7 +13,7 @@
 
      <!-- select 2  -->
 
-         <link href="{{ asset('admin-assets/css/select2/select2.min.css') }}" rel="stylesheet">
+          <link href="{{ asset('admin-assets/css/plugins/select2/select2.min.css') }}" rel="stylesheet">
          <!-- vue multi select  -->
          <link href="{{ asset('admin-assets/css/vue-multiselect.min.css') }}" rel="stylesheet">
          <!-- vue multiselect  -->

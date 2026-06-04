@@ -129,9 +129,14 @@
 <script>
 import { EventBus } from "../../../vue-assets";
 import Mixin from "../../../mixin";
+import { useCartStore } from '../../../../store/index';
 
 export default {
   mixins: [Mixin],
+  setup() {
+    const cartStore = useCartStore();
+    return { cartStore };
+  },
   data() {
     return {
       product: {
@@ -219,8 +224,7 @@ export default {
             this.successMessage(response.data);
             this.jq("#myModal").modal("hide");
             this.cartReset();
-            // dispatch a store commit
-            this.$store.dispatch("getCart");
+            this.cartStore.getCart();
           } else {
             this.successMessage(response.data);
           }

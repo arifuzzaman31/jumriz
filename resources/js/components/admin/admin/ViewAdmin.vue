@@ -105,9 +105,9 @@
 
     import Mixin from  '../../../mixin';
 
-    import Pagination from  '../pagination/Pagination';
+    import Pagination from '../pagination/Pagination.vue';
 
-    import Updateadmin from './Editadmin';
+    import Updateadmin from './EditAdmin.vue';
 	
 	export default {
 

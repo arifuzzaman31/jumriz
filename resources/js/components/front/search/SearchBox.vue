@@ -3,12 +3,12 @@
 		<form>
 			<div class="input-box">
 				<input
-         :value="keyword"
-         @input="evt=>keyword=evt.target.value"
-         name="key" 
-         class="single-input" 
-         placeholder="Search for product..."
-          @keyup="searchProduct()" type="text">
+          :value="keyword"
+          @input="evt=>keyword=evt.target.value"
+          name="key" 
+          class="single-input" 
+          placeholder="Search for product..."
+           @keyup="searchProduct()" type="text">
 			</div>
 		</form>
 	</div>
@@ -26,16 +26,12 @@
      }
    },
 
-   methods: {
-   	searchProduct()
-   	{
-     
-     this.$store.dispatch("searchProduct",{page:1,keyword:this.keyword}); //sakas job
-     
-     EventBus.$emit('scrol-to-result',this.keyword);
-
-
-   	}
-   }
+    methods: {
+    	searchProduct()
+    	{
+       
+      EventBus.$emit('scrol-to-result',this.keyword);
+    	}
+    }
   }
 </script>

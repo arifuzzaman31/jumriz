@@ -8,31 +8,31 @@
     <div class="table-responsive" v-if="cartCount > 0">
         <table class="table-condensed">
            <tfoot>
-                <tr>
-                    <td colspan="4"><span class="totitle">SubTotal</span></td>
-                    <td><span class="total">{{ currency.symbol }}{{ cartTotal | formatPrice }}</span></td>
-                </tr>
+                 <tr>
+                     <td colspan="4"><span class="totitle">SubTotal</span></td>
+                     <td><span class="total">{{ currency.symbol }}{{ cartTotal | formatPrice }}</span></td>
+                 </tr>
 
-                <tr>
-                    <td colspan="4"><span class="totitle">(+) Delivery Charge</span></td>
-                    <td><span class="total">{{ currency.symbol }} {{ shippingCost }}</span></td>
-                </tr>
+                 <tr>
+                     <td colspan="4"><span class="totitle">(+) Delivery Charge</span></td>
+                     <td><span class="total">{{ currency.symbol }} {{ shippingCost }}</span></td>
+                 </tr>
 
-                <tr v-if="is_coupon">
-                  <td colspan="4" class="text-right"><span class="totitle theme-color">Total : </span></td>
-                    <td><span class="total">{{ currency.symbol }}{{ ((cartTotal| formatPrice )+( shippingCost | formatPrice ))  }}</span></td>
-                </tr>
-                
-                <tr v-if="is_coupon">
-                    <td colspan="4"><span class="totitle">(-) Coupon Discount</span></td>
-                    <td><span class="total">{{ currency.symbol }}{{ couponDiscount }}</span></td>
-                </tr>
-                <tr>
-                    <td colspan="4" class="text-right "><span class="totitle theme-color">Grand Total : </span></td>
-                    <td><span class="total">{{ currency.symbol }}{{ ((cartTotal| formatPrice )+( shippingCost | formatPrice ) - couponDiscount)  }}</span></td>
-                </tr>
-                
-            </tfoot>
+                 <tr v-if="is_coupon">
+                   <td colspan="4" class="text-right"><span class="totitle theme-color">Total : </span></td>
+                     <td><span class="total">{{ currency.symbol }}{{ ((cartTotal| formatPrice )+( shippingCost | formatPrice ))  }}</span></td>
+                 </tr>
+                 
+                 <tr v-if="is_coupon">
+                     <td colspan="4"><span class="totitle">(-) Coupon Discount</span></td>
+                     <td><span class="total">{{ currency.symbol }}{{ couponDiscount }}</span></td>
+                 </tr>
+                 <tr>
+                     <td colspan="4" class="text-right "><span class="totile theme-color">Grand Total : </span></td>
+                     <td><span class="total">{{ currency.symbol }}{{ ((cartTotal| formatPrice )+( shippingCost | formatPrice ) - couponDiscount)  }}</span></td>
+                 </tr>
+                 
+             </tfoot>
         </table>
 
         
@@ -42,114 +42,139 @@
                     <input type="hidden" name="cart_total" :value="cartTotal">
     </div>
 
-<div class="text-center" v-else>
+<div class="text-center" v-se>
    <div class="cart-empty">
-     <div class="cart-icon">
-         <i class='lni lni-shopping-basket theme-color'></i>
-     </div>
-     <span class="mt10">Your shopping bag is empty.</span>
-      <a href="" class="shopping-now theme-color">Start shopping now.</a>
+      <div class="cart-icon">
+          <i class='lni lni-shopping-basket theme-color'></i>
+      </div>
+      <span class="mt10">Your shopping bag is empty.</span>
+       <a href="" class="shopping-now theme-color">Start shopping now.</a>
+  </div>
  </div>
-</div>
 
 
 <div>
    <div style="padding:10px;" >
 
- <div class="row" v-if="!is_coupon">
-     <div class="col-md-7 col-7">
-       <input type="text" v-model="coupon_form.coupon_code" class="form-control" placeholder="Enter Coupon Code">
-     </div>
-     <div class="col-md-5 col-5">
-       <button class="btn btn-outline-secondary" @click.prevent="applyCoupon()">Apply Coupon</button>
-     </div>
-   </div>
+  <div class="row" v-if="!is_con">
+      <div class="col-md-7 col-7">
+        <input type="text" v-model="coupon_form.coupon_code" class="form-control" placeholder="Enter Coupon Code">
+      </div>
+      <div class="col-md-5 col-5">
+        <button class="btn btn-outline-secondary" @click.prevent="applyCoupon()">Apply Coupon</button>
+      </div>
+    </div>
 
-   <div class="row" v-else>
-       <div class="col-md-12">
-         <p>Coupon  {{ applied_coupon.coupon_code }} Applied For {{ applied_coupon.amount }}
-           <span v-if="applied_coupon.amount_type ==1">{{ currency.symbol }}</span>
-           <span v-else>% Up To {{  applied_coupon.max_amount_limit }}{{ currency.symbol }}</span> Discount
-            </p>
-       </div>
-   </div>
+    <div class="row" v-else>
+        <div class="col-md-12">
+          <p>Coupon  {{ applied_coupon.coupon_code }} Applied For {{ applied_coupon.amount }}
+            <span v-if="applied_coupon.amount_type ==1">{{ currency.symbol }}</span>
+            <span v-else>% Up To {{  applied_coupon.max_amount_limit }}{{ currency.symbol }}</span> Discount
+             </p>
+        </div>
+    </div>
 
-   </div>
+    </div>
 </div>
 
   <!-- trial items  -->
 
-  
+   
 
 </div>
-   
+    
 </template>
 
 <script>
-  import {EventBus} from  '../../../vue-assets';
-  import Mixin from  '../../../mixin';
+  import { useCartStore, storeToRefs } from '../../../../store/index';
 
   export default {
     mixins : [Mixin],
     props : ['currency'],
-   data(){
-    return {
-     // search_keyword : {}
-     url : base_url,
+    setup() {
+      const cartStore = useCartStore();
+      const { cart_count, cart_total, cart_items, isLoading, trial_count, trial_items, isTrialLoading } = storeToRefs(cartStore);
+      return { cart_count, cart_total, cart_items, isLoading, trial_count, trial_items, isTrialLoading, cartStore };
+    },
+    data(){
+     return {
+      // search_keyword : {}
+      url : base_url,
      shipping : {},
-     is_coupon : false,
+      is_coupon : false,
 
-     coupon_form : {
-       coupon_code : ''
-     },
-     coupon_errors : null,
-     applied_coupon : {
-      amount:0,
-      amount_type:1,
-      coupon_code:"",
-      max_amount_limit:0,
-     },
-    }
-   },
+      coupon_form : {
+        coupon_code : ''
+      },
+      coupon_errors : null,
+      applied_coupon : {
+       amount:0,
+       amount_type:1,
+       coupon_code:"",
+       max_amount_limit:0,
+      },
+     }
+    },
+    computed: {
+        cartCount() {
+          return this.cart_count;
+        },
+        cartTotal() {
+          return this.cart_total;
+        },
+        cartItems() {
+          return this.cart_items;
+        },
+        isLoading() {
+          return this.isLoading;
+        },
+        trialCount() {
+          return this.trial_count;
+        },
+        trialItems() {
+          return this.trial_items;
+        },
+        trialLoading() {
+          return this.isTrialLoading;
+        },
+    },
+    mounted()
+    {
+       
+     this.getAppliedCoupon();
+     this.cartStore.getCart();
+     this.cartStore.getTrial();
+     this.getShipping();
 
-   mounted()
-   {
-     
-    this.getAppliedCoupon();
-    this.$store.dispatch("getCart");
-    this.$store.dispatch("getTrial");
-    this.getShipping();
-
-   },
+    },
 
    methods : {
     removeItem(id)
     {
       axios.get(base_url+'cart/remove/'+id)
           .then(response => {
-            this.$store.dispatch("getCart");
+            this.cartStore.getCart();
           })
     },
     removeTrial(id)
     {
       axios.get(base_url+'trial/remove/'+id)
           .then(response => {
-            this.$store.dispatch("getTrial");
+            this.cartStore.getTrial();
           })
     },
     updateCart(id,status)
     {
       axios.get(base_url+'cart/update/'+id+'/'+status)
            .then(response => {
-            
-            if(response.data.status === 'success'){
-             this.$store.dispatch("getCart");
-            }
-            else
-            {
-              this.successMessage(response.data);
-            }
-
+             
+             if(response.data.status === 'success'){
+              this.cartStore.getCart();
+             }
+             else
+             {
+               this.successMessage(response.data);
+             }
            })
     },
     getShipping()
@@ -177,7 +202,7 @@
                this.validationError(response.data.message);
              }
            });
-            
+           
     },
 
     getAppliedCoupon()
@@ -198,44 +223,44 @@
 
    },
 
-   computed : 
-   {
+    computed : 
+    {
 
-    cartCount(){
+     cartCount(){
 
-      return this.$store.getters.cart_count;
-    },    
+       return this.cart_count;
+     },    
 
-    cartTotal(){
+     cartTotal(){
 
-      return this.$store.getters.cart_total;
-    },
-    isLoading(){
+       return this.cart_total;
+     },
+     isLoading(){
 
-      return this.$store.getters.cart_loading;
-    },    
+       return this.isLoading;
+     },    
 
-    cartItems(){
+     cartItems(){
 
-      return this.$store.getters.cart_items;
+       return this.cart_items;
 
-    },
+     },
 
-        // get trial item 
+         // get trial item 
 
-    trialCount(){
+     trialCount(){
 
-      return this.$store.getters.trial_count;
-    }, 
+       return this.trial_count;
+     }, 
 
-    trialItems(){
+     trialItems(){
 
-      return this.$store.getters.trial_items;
+       return this.trial_items;
 
-    },
+     },
 
     shippingCost(){
-     
+      
      if(this.shipping.shipping_status == 1)
      {
       
@@ -255,7 +280,7 @@
       return 0;
      }
 
-      
+       
     },
 
     couponDiscount()
@@ -283,7 +308,7 @@
           return percentageAmount;
          
         }
-       
+        
       }
       
       return 0;
@@ -294,6 +319,3 @@
 
   }
 </script>
-
-
-

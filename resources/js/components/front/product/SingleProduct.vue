@@ -62,10 +62,15 @@
 <script>
 import { EventBus } from "../../../vue-assets";
 import Mixin from "../../../mixin";
+import { useCartStore } from '../../../../store/index';
 
 export default {
   props: ["currency", "product"],
   mixins: [Mixin],
+  setup() {
+    const cartStore = useCartStore();
+    return { cartStore };
+  },
   data() {
     return {
       url: base_url,
@@ -108,7 +113,7 @@ export default {
         })
         .then((response) => {
           if (response.data.status === "success") {
-            this.$store.dispatch("getCart");
+            this.cartStore.getCart();
             this.cart_button = "Add to Cart";
             this.successMessage(response.data);
           } else {
