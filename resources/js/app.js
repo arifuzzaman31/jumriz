@@ -1,20 +1,20 @@
 import { createApp } from 'vue';
-import { createPinia, storeToRefs } from 'pinia';
+import { createPinia } from 'pinia';
 import { useCartStore } from './store/index';
 
 const app = createApp({});
-
 const pinia = createPinia();
 app.use(pinia);
 
-const cartStore = useCartStore();
-const { cart_items, trial_items } = storeToRefs(cartStore);
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await Promise.all([
+// Standardized initial data fetch
+const initStore = async () => {
+    const cartStore = useCartStore();
+    await Promise.allSettled([
         cartStore.getCart(),
         cartStore.getTrial(),
     ]);
-});
+};
+
+initStore();
 
 app.mount('#wrapper');

@@ -90,184 +90,104 @@
 		</div>
 
 </template>
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import axios from 'axios';
+import { emitter, base_url } from '../../../vue-assets';
 
+const admin = ref({
+    id: '',
+    name: '',
+    email: '',
+    area: '',
+    role_id: '',
+    avatar: '',
+    view_image: '',
+    status: 1,
+    image_status: 'unchanged',
+});
 
-<script>
-	
-	import { EventBus } from  '../../../vue-assets';
+const url = base_url;
+const roleList = ref([]);
+const cities = ref([]);
+const button_name = ref("Update");
+const validation_error = ref(null);
 
-	import Mixin from  '../../../mixin';
+const getAdmin = async (id) => {
+    const response = await axios.get(base_url + 'admin/admin/' + id + '/edit');
+    admin.value.id = response.data.id;
+    admin.value.name = response.data.name;
+    admin.value.email = response.data.email;
+    admin.value.area = response.data.admin_area_id;
+    admin.value.role_id = response.data.role_id;
+    admin.value.view_image = response.data.avatar;
+    admin.value.status = response.data.status;
+};
 
-	export default {
+const getRoleList = async () => {
+    const response = await axios.get(base_url + 'admin/all-role');
+    roleList.value = response.data;
+};
 
-		mixins : [Mixin],
+const getAreaList = async () => {
+    const response = await axios.get(base_url + 'admin/all-area');
+    cities.value = response.data;
+};
 
-		data(){
+onMounted(() => {
+    getRoleList();
+    getAreaList();
+    emitter.on('update-admin', (id) => {
+        getAdmin(id);
+        $('#update-admin').modal('show');
+    });
+});
 
-			return {
+onUnmounted(() => {
+    emitter.off('update-admin');
+});
 
-				admin : {
+const onImageChange = (e) => {
+    let files = e.target.files || e.dataTransfer.files;
+    if (!files.length) return;
+    createImage(files[0]);
+};
 
-					'id' : '',  
-					'name' : '',  
-					'email' : '',
-					'area' : '',
-					'role_id' : '',
-					'avatar' : '',  
-					'view_image' : '',  
-					'status' : 1,
+const createImage = (file) => {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        admin.value.avatar = e.target.result;
+        admin.value.image_status = 'changed';
+    };
+    reader.readAsDataURL(file);
+};
 
-                     // when new file given it will update 
+const save = async () => {
+    button_name.value = "Updating...";
+    try {
+        await axios.post(base_url + 'admin/admin/update/' + admin.value.id, admin.value);
+        $('#update-admin').modal('hide');
+        resetForm();
+        emitter.emit('admin-created');
+        button_name.value = "Update";
+    } catch (err) {
+        if (err.response && err.response.status == 422) {
+            validation_error.value = err.response.data.errors;
+        }
+        button_name.value = "Update";
+    }
+};
 
-					'image_status' : 'unchanged',  
-
-				},
-				url : base_url,
-				roleList : [],
-				cities : [],
-				button_name : "Update",
-				validation_error : null, 
-
-			}
-
-		},
-
-		mounted(){
-
-          // this not work in event bus 
-
-          var _this = this;
-          _this.getRoleList();
-          _this.getAreaList();
-          EventBus.$on('update-admin',function(id) {
- 
-          _this.getAdmin(id);
-
-          $('#update-admin').modal('show');
-
-
-          });
-
-
-
-		},
-
-
-		methods : {
-
-			getAdmin(id){
-            
-             axios.get(base_url+'admin/admin/'+id+'/edit')
-                  .then(response => {
-                     
-                     this.admin.id = response.data.id;
-                     this.admin.name = response.data.name;
-                     this.admin.email = response.data.email;
-                     this.admin.area = response.data.admin_area_id;
-                     this.admin.role_id = response.data.role_id;
-                     this.admin.view_image = response.data.avatar;
-                     this.admin.status = response.data.status;
-
-                  });
-
-			},
-
-			getRoleList()
-			{
-				axios.get(base_url+'admin/all-role')
-				     .then(response => {
-				     	this.roleList = response.data;
-				    });
-			},
-
-			getAreaList()
-			{
-				axios.get(base_url+'admin/all-area')
-				     .then(response => {
-				     	this.cities = response.data;
-				     });
-			},
-
-			onImageChange(e) {
-
-				let files = e.target.files || e.dataTransfer.files;
-				if (!files.length)
-					return;
-				this.createImage(files[0]);
-
-			},
-			createImage(file) {
-				let reader = new FileReader();
-				let vm = this;
-				reader.onload = (e) => {
-
-					vm.admin.avatar = e.target.result;
-
-
-					// update status during chaning of new image 
-
-					vm.admin.image_status = 'changed';
-				};
-				reader.readAsDataURL(file);
-			},
-
-			save(){
-
-             this.button_name = "Updating...";
-
-                 
-             axios.post(base_url+'admin/admin/update/'+this.admin.id,this.admin)
-                .then(response => {
-
-                    $('#update-admin').modal('hide');
-
-                    this.resetForm();
-                    this.successMessage(response.data);
-                    EventBus.$emit('admin-created');
-                    this.button_name = "Update";
-
-                    
-                })
-                .catch(err => {
-
-                 if (err.response.status == 422) {
-
-                    this.validation_error = err.response.data.errors;
-
-                    this.validationError();
-
-                    this.button_name = "Update";
-                } 
-                else 
-                {
-
-                    this.successMessage(err);
-
-                    this.isloading = false;
-
-                    this.button_name = "Update";
-                }
-             })
-
-         },
-
-         resetForm(){
-          
-          this.admin = {
-					'id' : '',  
-					'name' : '',  
-					'email' : '',
-					'role_id' : '',
-					'avatar' : '',  
-					'view_image' : '',  
-					'status' : '', 
-				}
-
-		  this.validation_error = null;		
-
-         }
-     }
-
- }
-
+const resetForm = () => {
+    admin.value = {
+        id: '',
+        name: '',
+        email: '',
+        role_id: '',
+        avatar: '',
+        view_image: '',
+        status: '',
+    };
+    validation_error.value = null;
+};
 </script>

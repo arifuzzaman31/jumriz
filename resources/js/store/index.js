@@ -1,48 +1,56 @@
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
+import axios from 'axios';
 
 export const useCartStore = defineStore('cart', {
+    // 1. State: Same as Vuex
     state: () => ({
-      cart_items: [],
-      total_cart_item: 0,
-      total_cart_amount: 0,
-      isLoading: false,
-      trial_items: [],
-      total_trial_item: 0,
-      total_trial_amount: 0,
-      isTrialLoading: false,
+        cart_items: [],
+        trial_items: [],
+        loading: false,
+        error: null
     }),
+
+    // 2. Getters: Same as Vuex but simpler
     getters: {
-      cart_items: (state) => state.cart_items,
-      cart_count: (state) => state.total_cart_item,
-      cart_total: (state) => state.total_cart_amount,
-      cart_loading: (state) => state.isLoading,
-      productWithId: (state) => (id) => {
-        return Object.values(state.cart_items).find(todo => todo.id == id)
-      },
-      trial_items: (state) => state.trial_items,
-      trial_count: (state) => state.total_trial_item,
-      trial_total: (state) => state.total_trial_amount,
-      trial_loading: (state) => state.isLoading,
-      trialWithId: (state) => (id) => {
-        return Object.values(state.trial_items).find(product => product.id == id)
-      },
+        cartTotal: (state) => state.cart_items.reduce((acc, item) => acc + item.price, 0),
+        hasItems: (state) => state.cart_items.length > 0
     },
+
+    // 3. Actions: Combined logic of Vuex Mutations + Actions
     actions: {
-      async getCart() {
-        this.isLoading = true
-        const { data } = await axios.get(base_url + 'cart-items')
-        this.cart_items = data.cart_items
-        this.total_cart_item = data.cart_count
-        this.total_cart_amount = data.cart_total
-        this.isLoading = false
-      },
-      async getTrial() {
-        this.isTrialLoading = true
-        const { data } = await axios.get(base_url + 'trial-items')
-        this.trial_items = data.trial_items
-        this.total_trial_item = data.trial_count
-        this.total_trial_amount = data.trial_total
-        this.isTrialLoading = false
-      },
-    },
-})
+        async getCart() {
+            this.loading = true;
+            try {
+                const response = await axios.get('/api/cart');
+                // Instead of commit('SET_CART', data), modify state directly
+                this.cart_items = response.data;
+            } catch (err) {
+                this.error = 'Failed to load cart';
+                console.error(err);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async getTrial() {
+            try {
+                const response = await axios.get('/api/trial');
+                this.trial_items = response.data;
+            } catch (err) {
+                console.error(err);
+            }
+        },
+
+        async addItem(product) {
+            try {
+                const response = await axios.post('/api/cart', { product_id: product.id });
+                this.cart_items.push(response.data);
+                
+                // You can call other actions directly
+                // this.logActivity('Item Added'); 
+            } catch (err) {
+                this.error = 'Could not add item';
+            }
+        }
+    }
+});

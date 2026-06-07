@@ -52,8 +52,8 @@
                         <tbody>
                         <tr v-for="(value,index) in admins.data" :key="index">
                             <td>
-                                <img v-if="value.avatar" v-lazy="url+'/images/admin/'+value.avatar" class="rounded-circle" style="max-height: 100px;">
-                                <img v-else v-lazy="url+'/images/default_avatar.png'" class="rounded-circle" style="max-height: 100px;">
+                                <img v-if="value.avatar" v-lazy="url + 'images/admin/' + value.avatar" class="rounded-circle" style="max-height: 100px;">
+                                <img v-else v-lazy="url + 'images/default_avatar.png'" class="rounded-circle" style="max-height: 100px;">
                             </td>
                             <td>{{ value.name }}</td>
                             <td>{{ value.email }}</td>
@@ -88,7 +88,7 @@
         </div>
 
         <div class="ibox animated fadeInRightBig">
-           <pagination v-if="admins" :pageData="admins"></pagination> 
+           <pagination v-if="admins" :pageData="admins" @page-clicked="getadmin"></pagination> 
         </div>
 
         <div class="ibox">
@@ -99,126 +99,77 @@
 </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import axios from 'axios';
+import Swal from 'sweetalert2';
+import { emitter, base_url } from '../../../vue-assets';
+import Pagination from '../pagination/Pagination.vue';
+import UpdateAdmin from './EditAdmin.vue';
 
-    import { EventBus } from  '../../../vue-assets';
+const admins = ref([]);
+const isLoading = ref(false);
+const keyword = ref('');
+const url = base_url;
 
-    import Mixin from  '../../../mixin';
+const getadmin = async (page = 1) => {
+    isLoading.value = true;
+    try {
+        const response = await axios.get(base_url + 'admin/admin-list?page=' + page + '&keyword=' + keyword.value);
+        admins.value = response.data;
+    } finally {
+        isLoading.value = false;
+    }
+};
 
-    import Pagination from '../pagination/Pagination.vue';
+const edit = (id) => {
+    emitter.emit('update-admin', id);
+};
 
-    import Updateadmin from './EditAdmin.vue';
-	
-	export default {
+const deleteadmin = async (id) => {
+    const result = await Swal.fire({
+        title: 'Are you sure ?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    });
 
-        mixins : [Mixin],
-
-        components : {
-         'pagination' : Pagination,
-         'update-admin' : Updateadmin,
-        },
-
-       data(){
-         
-         return {
-            
-            admins : [],
-
-            isLoading : false,
-
-            keyword : '',
-
-            url : base_url,
-
-         }
-
-       },
-
-       mounted(){
-
-
-        // this  will not work in eventBus that why 
-        // we are initializing with _this
-
-        var _this = this;
-
-        _this.getadmin();
-
-        EventBus.$on('admin-created',function(){
-
-            // getting updated data when insert update delete happend 
-
-        _this.getadmin();
-
-
-        });
-
-
-
-       },
-
-       methods : {
-       
-
-        getadmin(page = 1){
-
-           this.isLoading = true;
-         
-         axios.get(base_url+'admin/admin-list?page='+page+'&keyword='+this.keyword)
-              .then(response => {
-               this.admins = response.data;
-               this.isLoading = false;
-               // console.log(this.admins);
-
-              });
-
-        },
-
-        pageClicked(pageNo){
-        var vm = this;
-        vm.getadmin(pageNo);
-        },
-
-        // edit admin 
-
-        edit(id){
-            EventBus.$emit('update-admin',id);
-        },
-
-        // delete admin 
-
-        deleteadmin(id){
-                Swal.fire({
-                    title: 'Are you sure ?',
-                    text: "You won't be able to revert this!",
-                    icon: 'error',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                },() => {
-
-                }).then((result) => {
-                    if (result.value) {
-
-                        axios.get(base_url+'admin/admin/delete/'+id)
-                        .then(res => {
-                            this.successMessage(res.data);
-                            this.getadmin();
-                        })
-                    }
-                })
-
-           },
-
-        changeStatus(id){
-            axios.get(base_url+'admin/admin/status/'+id)
-              .then(response => {
-               this.successMessage(response.data);
-            });
+    if (result.isConfirmed) {
+        try {
+            await axios.get(base_url + 'admin/admin/delete/' + id);
+            getadmin();
+        } catch (error) {
+            console.error(error);
         }
-       }
+    }
+};
 
-	}
+const changeStatus = async (id) => {
+    try {
+        await axios.get(base_url + 'admin/admin/status/' + id);
+    } catch (error) {
+        console.error(error);
+    }
+};
 
+onMounted(() => {
+    getadmin();
+    emitter.on('admin-created', () => {
+        getadmin();
+    });
+});
+
+onUnmounted(() => {
+    emitter.off('admin-created');
+});
+
+// Expose for pagination component if needed
+defineExpose({
+    pageClicked(pageNo) {
+        getadmin(pageNo);
+    }
+});
 </script>

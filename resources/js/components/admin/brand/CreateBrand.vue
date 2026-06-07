@@ -74,127 +74,64 @@
 
 </template>
 
+<script setup>
+import { ref } from 'vue';
+import axios from 'axios';
+import { emitter, base_url } from '../../../vue-assets';
 
-<script>
-	
-	import {EventBus} from  '../../../vue-assets';
+const brand = ref({
+    name: '',
+    native_name: '',
+    image: '',
+    status: 1,
+});
 
-	import Mixin from  '../../../mixin';
+const button_name = ref("Save");
+const validation_error = ref(null);
+const url = base_url;
 
-	export default {
+const onImageChange = (e) => {
+    let files = e.target.files || e.dataTransfer.files;
+    if (!files.length) return;
+    createImage(files[0]);
+};
 
-		mixins : [Mixin],
+const createImage = (file) => {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        brand.value.image = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
 
-		data(){
+const save = async () => {
+    button_name.value = "Saving...";
+    try {
+        const response = await axios.post(base_url + 'admin/brand', brand.value);
+        if (response.data.status === 'success') {
+            $('#modal-form').modal('hide');
+            resetForm();
+            // Notify other components that a brand was created
+            emitter.emit('brand-created');
+        }
+        button_name.value = "Save";
+    } catch (err) {
+        if (err.response && err.response.status == 422) {
+            validation_error.value = err.response.data.errors;
+        } else {
+            console.error(err);
+        }
+        button_name.value = "Save";
+    }
+};
 
-			return {
-
-				brand : {
-
-					'name' : '',  
-					'native_name' : '',  
-					'image' : '',  
-					'status' : 1,   
-
-				},
-
-				button_name : "Save",
-				validation_error : null, 
-
-			}
-
-		},
-
-
-		methods : {
-
-			onImageChange(e) {
-
-				let files = e.target.files || e.dataTransfer.files;
-				if (!files.length)
-					return;
-				this.createImage(files[0]);
-
-			},
-			createImage(file) {
-				let reader = new FileReader();
-				let vm = this;
-				reader.onload = (e) => {
-					vm.brand.image = e.target.result;
-				};
-				reader.readAsDataURL(file);
-			},
-
-			save(){
-
-             this.button_name = "Saving...";
-
-                 
-             axios.post(base_url+'admin/brand',this.brand)
-                .then(response => {
-
-                    if(response.data.status === 'success'){
-
-
-                    $('#modal-form').modal('hide');
-
-                    this.resetForm();
-                    this.successMessage(response.data);
-                    EventBus.$emit('brand-created');
-
-                    this.button_name = "Save";
-
-
-					}
-				   else
-				   {
-					  this.successMessage(response.data);	
-					  this.button_name = "Save";
-					}
-                    
-                })
-                .catch(err => {
-
-                 if (err.response.status == 422) {
-
-                    this.validation_error = err.response.data.errors;
-
-                    this.validationError();
-
-                    this.button_name = "Save";
-                } 
-                else 
-                {
-
-                    this.successMessage(err);
-
-                    this.isloading = false;
-
-                    this.button_name = "Save";
-                }
-             })
-
-         },
-
-         resetForm(){
-          
-          this.brand = {
-
-					'name' : '',  
-					'native_name' : '',  
-					'image' : '',  
-					'status' : 1,   
-
-				}
-
-		  this.validation_error = null;		
-
-         }
-
-
-
-     }
-
- }
-
+const resetForm = () => {
+    brand.value = {
+        name: '',
+        native_name: '',
+        image: '',
+        status: 1,
+    };
+    validation_error.value = null;
+};
 </script>

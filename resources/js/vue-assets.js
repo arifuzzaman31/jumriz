@@ -13,6 +13,10 @@ if (token) {
     console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
 }
 
+// Use Vite's built-in BASE_URL. 
+// Note: This usually returns '/' and always includes the trailing slash.
+export const base_url = import.meta.env.BASE_URL;
+
 // 2. Sweet Alert Import (Stays the same, standard ES syntax)
 import Swal from 'sweetalert2';
 window.Swal = Swal;
@@ -25,4 +29,4 @@ window.Swal = Swal;
 // Vue 3 completely removed '$on', '$off', and '$once' methods from the core instance.
 // To keep an Event Bus working, you should use a lightweight library like 'mitt'.
 import mitt from 'mitt';
-export const EventBus = mitt();
+export const emitter = mitt();

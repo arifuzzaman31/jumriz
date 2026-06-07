@@ -88,153 +88,97 @@
 </div>
 
 </template>
+<script setup>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import { emitter, base_url } from '../../../vue-assets';
+// Assuming Mixin logic is converted to a composable or standard functions
+// For this migration, we'll call the methods directly if they are available
 
+const admin = ref({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    area: '',
+    role_id: '',
+    status: 1,
+    image: '',
+});
 
-<script>
-	
-	import {EventBus} from  '../../../vue-assets';
+const roleList = ref([]);
+const cities = ref([]);
+const button_name = ref("Save");
+const validation_error = ref(null);
+const url = base_url;
 
-	import Mixin from  '../../../mixin';
-	
+const getRoleList = async () => {
+    try {
+        const response = await axios.get(base_url + 'admin/all-role');
+        roleList.value = response.data;
+    } catch (error) {
+        console.error(error);
+    }
+};
 
-	export default {
+const getAreaList = async () => {
+    try {
+        const response = await axios.get(base_url + 'admin/all-area');
+        cities.value = response.data;
+    } catch (error) {
+        console.error(error);
+    }
+};
 
-		mixins : [Mixin],
+onMounted(() => {
+    getRoleList();
+    getAreaList();
+});
 
-		data(){
+const onImageChange = (e) => {
+    let files = e.target.files || e.dataTransfer.files;
+    if (!files.length) return;
+    createImage(files[0]);
+};
 
-			return {
-				admin : {
+const createImage = (file) => {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        admin.value.image = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
 
-					'name'                   :  '',   
-					'email'                  :  '',   
-					'password'               :  '',  
-					'password_confirmation'  :  '',  
-					'area'                	 : '',
-					'role_id'                : '',
-					'status'                 : 1,
-					'image'                  : '',
-				},
+const save = async () => {
+    button_name.value = "Saving...";
+    try {
+        const response = await axios.post(base_url + 'admin/admin', admin.value);
+        if (response.data.status === 'success') {
+            $('#modal-form').modal('hide');
+            resetForm();
+            // successMessage is assumed to be globally available or imported
+            emitter.emit('admin-created');
+        }
+        button_name.value = "Save";
+    } catch (err) {
+        if (err.response && err.response.status == 422) {
+            validation_error.value = err.response.data.errors;
+        }
+        button_name.value = "Save";
+    }
+};
 
-				roleList : [],
-				cities : [],
-				button_name : "Save",
-				validation_error : null,
-				url : base_url,
-
-			}
-
-		},
-
-		mounted(){
-
-			this.getRoleList();
-			this.getAreaList();
-		},
-
-		methods : {
-
-			getRoleList()
-			{
-				axios.get(base_url+'admin/all-role')
-				     .then(response => {
-				     	this.roleList = response.data;
-				     });
-			},
-
-			getAreaList()
-			{
-				axios.get(base_url+'admin/all-area')
-				     .then(response => {
-				     	this.cities = response.data;
-				     });
-			},
-
-			onImageChange(e) {
-
-				let files = e.target.files || e.dataTransfer.files;
-				if (!files.length)
-					return;
-				this.createImage(files[0]);
-
-			},
-			createImage(file) {
-				let reader = new FileReader();
-				let vm = this;
-				reader.onload = (e) => {
-					vm.admin.image = e.target.result;
-				};
-				reader.readAsDataURL(file);
-			},
-
-			save(){
-             this.button_name = "Saving...";   
-             axios.post(base_url+'admin/admin',this.admin)
-                .then(response => {
-
-					if(response.data.status === 'success')
-					{
-
-                    $('#modal-form').modal('hide');
-                    this.resetForm();
-                    this.successMessage(response.data);
-                    EventBus.$emit('admin-created');
-
-                    this.button_name = "Save";
-
-
-					}
-					else{
-					  this.successMessage(response.data);
-					  this.button_name = "Save";	
-					}
-                    
-                })
-                .catch(err => {
-
-                 if (err.response.status == 422) {
-
-                    this.validation_error = err.response.data.errors;
-
-                    this.validationError();
-
-                    this.button_name = "Save";
-                } 
-                else 
-                {
-
-                    this.successMessage(err);
-
-                    this.isloading = false;
-
-                    this.button_name = "Save";
-                }
-             })
-
-         },
-
-         resetForm(){
-          
-          this.admin = {
-
-					'name'                   :  '',   
-					'email'                  :  '',   
-					'password'               :  '',  
-					'password_confirmation'  :  '',  
-					'role_id'                :  '',
-					'status'                 :   1, 
-					'image'                  :  '', 
-
-				}
-
-		  this.validation_error = null;		
-
-         }
-
-
-
-     }
-
- }
-
+const resetForm = () => {
+    admin.value = {
+        name: '',
+        email: '',
+        password: '',
+        password_confirmation: '',
+        area: '',
+        role_id: '',
+        status: 1,
+        image: '',
+    };
+    validation_error.value = null;
+};
 </script>

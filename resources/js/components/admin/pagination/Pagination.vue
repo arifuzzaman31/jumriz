@@ -41,64 +41,41 @@
 
 </template>
 
-<script type="text/javascript">
-    import {EventBus} from '../../../vue-assets';
+<script setup>
+import { computed } from 'vue';
 
-	export default{
+const props = defineProps({
+    pageData: {
+        type: Object,
+        required: true
+    }
+});
 
-		props : ['pageData'],
+const emit = defineEmits(['page-clicked']);
 
-		data(){
+const range = (start, count) => {
+    return Array.apply(0, Array(count)).map((element, index) => index + start);
+};
 
-			return {
+const pageClicked = (page) => {
+    emit('page-clicked', page);
+};
 
+const paginateLoop = computed(() => {
+    if (props.pageData.last_page > 11) {
+        if (props.pageData.last_page - 5 <= props.pageData.current_page) {
+            return props.pageData.last_page - 10;
+        }
+        if (props.pageData.current_page > 6) {
+            return props.pageData.current_page - 5;
+        }
+    }
+    return 1;
+});
 
-			}
-		},
-
-		methods : {
-       
-			range(start, count) {
-				return Array.apply(0, Array(count)).map(function(element, index) {
-					return index + start;
-				});
-			},
-
-			pageClicked(page){
-                
-                this.$parent.pageClicked(page);
-
-			}
-		},
-
-			computed: {
-			paginateLoop() {
-				let pageData = this.pageData;
-				if (pageData.last_page > 11) {
-					if (pageData.last_page - 5 <= pageData.current_page) {
-						return pageData.last_page - 10;
-					}
-					if (pageData.current_page > 6) {
-						return pageData.current_page - 5;
-					}
-				}
-				return 1;
-			},
-			numberOfPage() {
-				if (this.pageData.last_page < 11) {
-					return this.pageData.last_page;
-				} else {
-					return 11;
-				}
-			}
-		}
-
-
-
-
-	}
-
-
+const numberOfPage = computed(() => {
+    return props.pageData.last_page < 11 ? props.pageData.last_page : 11;
+});
 </script>
 
 <style scoped>

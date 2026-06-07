@@ -35,20 +35,25 @@ class AppServiceProvider extends ServiceProvider
             return str_replace(':values', join(",", $parameters), $message);
         });
 
-        // sharing  data in all view
+        // sharing data in all view - only in web context
+        if (!$this->app->runningInConsole()) {
+            try {
+                $shop_info = cache()->remember('shop-info', 43000, function () {
+                    return ShopSetting::orderBy('id', 'desc')->first();
+                });
 
-        $shop_info = cache()->remember('shop-info', 43000, function () {
-            return ShopSetting::orderBy('id', 'desc')->first();
-        });
+                $seo_info = cache()->remember('seo-info', 43000, function () {
+                    return SeoSetting::orderBy('id', 'desc')->first();
+                });
 
-        $seo_info = cache()->remember('seo-info', 43000, function () {
-            return SeoSetting::orderBy('id', 'desc')->first();
-        });
-
-        View::share([
-            'shop_info' => $shop_info,
-            'seo_info'  => $seo_info,
-        ]);
+                View::share([
+                    'shop_info' => $shop_info,
+                    'seo_info'  => $seo_info,
+                ]);
+            } catch (\Exception $e) {
+                // Skip if tables don't exist yet
+            }
+        }
 
         // Set PWA settings from database
         try {
