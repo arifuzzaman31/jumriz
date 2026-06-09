@@ -2,274 +2,155 @@
 
 namespace App\Http\Controllers\Product;
 
-use App\AllStatic;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Product\SubCategoryResource;
 use App\Models\Category;
-use App\Models\Product;
 use App\Models\SubCategory;
+use App\Models\SubSubCategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class SubCategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return Response
      */
-    public function index()
+    public function index(): View
     {
-
-        $category = Category::select('id', 'category_name', 'category_native_name')
-            ->where('status', '=', AllStatic::$active)
-            ->get();
-
-        return view('admin.subcategory.subcategory', [
-
-            'category' => $category,
-
-        ]);
+        return view('admin.category.sub_category');
     }
 
-    public function subCategoryList(Request $request)
+    public function subCategoryList(Request $request): AnonymousResourceCollection
     {
-
-        $sub_category = SubCategory::with(['category:id,category_name,category_native_name'])
-            ->orderBy('updated_at', 'desc');
-
-        if ($request->category != '' && $request->category != null) {
-
-            $sub_category->where('category_id', '=', $request->category);
-
-            // return $request->category
-
-        }
+        $subCategory = SubCategory::with('category:id,category_name')->orderBy('updated_at', 'desc');
 
         if ($request->keyword != '') {
-
-            $sub_category->where('sub_category_name', 'LIKE', '%'.$request->keyword.'%')
-                ->orWhere('sub_category_native_name', 'LIKE', '%'.$request->keyword.'%');
-
+            $subCategory->where('sub_category_name', 'LIKE', '%' . $request->keyword . '%')
+                ->orWhere('sub_category_native_name', 'LIKE', '%' . $request->keyword . '%');
         }
 
-        $sub_category = $sub_category->paginate(10);
-
-        return SubCategoryResource::collection($sub_category);
-
-    }
-
-    // get sub category by category id
-
-    public function getSubCategory(Request $request, $id)
-    {
-
-        $sub_category = SubCategory::select('id', 'sub_category_name', 'sub_category_native_name')
-            ->where('category_id', '=', $id)
-            ->orderBy('sub_category_name', 'asc');
-        // in edit time we required active inactive all sub category
-        if (! $request->has('edit_time')) {
-            $sub_category->where('status', AllStatic::$active);
+        if ($request->category_id != '') {
+            $subCategory->where('category_id', $request->category_id);
         }
-        $sub_category = $sub_category->get();
 
-        return $sub_category;
-
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
-     */
-    public function create()
-    {
-        //
+        $subCategory = $subCategory->paginate(10);
+        return SubCategoryResource::collection($subCategory);
     }
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @return Response
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-
         $request->validate([
-
-            'name' => 'required|unique:categories,category_name',
-            'image' => 'required|image64:jpeg,jpg,png,gif',
-            'category' => 'required',
-        ],
-            [
-                'image.image64' => 'File must be an image of jpeg,png,gif',
-            ]);
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|unique:sub_categories,sub_category_name',
+            'image' => 'nullable|image64:jpeg,jpg,png,gif',
+        ], [
+            'image.image64' => 'File must be an image of jpeg,png,gif',
+        ]);
 
         try {
-
-            DB::beginTransaction();
-
-            $sub_category = new SubCategory;
-
-            $sub_category->category_id = $request->category;
-            $sub_category->sub_category_name = $request->name;
-            $sub_category->sub_category_native_name = $request->native_name;
-            $sub_category->status = $request->status;
+            $subCategory = new SubCategory;
+            $subCategory->category_id = $request->category_id;
+            $subCategory->sub_category_name = $request->name;
+            $subCategory->sub_category_native_name = $request->native_name;
+            $subCategory->status = $request->status;
 
             $imageData = $request->get('image');
-
             if ($imageData) {
-
-                $fileName = storeBase64Image($imageData, 'sub_category/icon');
-
-                $sub_category->icon = $fileName;
-
+                $fileName = storeBase64Image($imageData, 'category/subcategory/icon');
+                $subCategory->icon = $fileName;
             }
 
-            $sub_category->save();
+            $subCategory->save();
 
-            DB::commit();
-            //  clear home page category cache
+            // Clear relevant caches
             Cache::forget('all-category');
 
-            return response()->json(['status' => 'success', 'message' => 'Sub Category Added Successfully !']);
-
+            return response()->json(['status' => 'success', 'message' => 'Sub Category Added Successfully!']);
         } catch (\Exception $e) {
-            DB::rollback();
-
-            return $e;
-
-            return response()->json(['status' => 'error', 'message' => 'Opps Something Went Wrong!']);
-
+            return response()->json(['status' => 'error', 'message' => 'Opps Something Went Wrong!', 'debug' => $e->getMessage()], 500);
         }
-
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return Response
-     */
-    public function show($id)
-    {
-        //
     }
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return Response
      */
-    public function edit($id)
+    public function edit($id): SubCategoryResource
     {
-        return $sub_category = new SubCategoryResource(SubCategory::find($id));
+        return new SubCategoryResource(SubCategory::findOrFail($id));
     }
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  int  $id
-     * @return Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): JsonResponse
     {
         $request->validate([
-
-            'name' => 'required|unique:categories,category_name',
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|unique:sub_categories,sub_category_name,' . $id . ',id',
             'image' => 'nullable|image64:jpeg,jpg,png,gif',
-            'category' => 'required',
-        ],
-            [
-                'image.image64' => 'File must be an image of jpeg,png,gif',
-            ]);
+        ], [
+            'image.image64' => 'File must be an image of jpeg,png,gif',
+        ]);
 
         try {
-
-            DB::beginTransaction();
-
-            $sub_category = SubCategory::find($id);
-
-            $sub_category->category_id = $request->category;
-            $sub_category->sub_category_name = $request->name;
-            $sub_category->sub_category_native_name = $request->native_name;
-            $sub_category->status = $request->status;
+            $subCategory = SubCategory::findOrFail($id);
+            $subCategory->category_id = $request->category_id;
+            $subCategory->sub_category_name = $request->name;
+            $subCategory->sub_category_native_name = $request->native_name;
+            $subCategory->status = $request->status;
 
             $imageData = $request->get('image');
-
             if ($imageData) {
-
-                if (file_exists('images/sub_category/icon/'.$sub_category->icon) && ! empty($sub_category->icon)) {
-
-                    unlink('images/sub_category/icon/'.$sub_category->icon);
-
+                $oldImagePath = public_path('images/category/subcategory/icon/' . $subCategory->icon);
+                if (!empty($subCategory->icon) && file_exists($oldImagePath)) {
+                    @unlink($oldImagePath);
                 }
 
-                $fileName = storeBase64Image($imageData, 'sub_category/icon');
-                $sub_category->icon = $fileName;
-
+                $fileName = storeBase64Image($imageData, 'category/subcategory/icon');
+                $subCategory->icon = $fileName;
             }
 
-            $sub_category->update();
-
-            DB::commit();
-
-            //  clear home page category cache
+            $subCategory->save();
             Cache::forget('all-category');
 
-            return response()->json(['status' => 'success', 'message' => 'Sub Category Updated !']);
-
+            return response()->json(['status' => 'success', 'message' => 'Sub Category Successfully Updated!']);
         } catch (\Exception $e) {
-            DB::rollback();
-
-            return $e;
-
-            return response()->json(['status' => 'error', 'message' => 'Opps Something Went Wrong!']);
-
+            return response()->json(['status' => 'error', 'message' => 'Opps Something Went Wrong!', 'debug' => $e->getMessage()], 500);
         }
     }
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return Response
      */
-    public function destroy($id)
+    public function destroy($id): JsonResponse
     {
+        // Check if it has sub-subcategories
+        $count_subsubcategory = SubSubCategory::where('sub_category_id', '=', $id)->count();
 
-        try {
-
-            $count = Product::where('sub_category_id', '=', $id)->count();
-
-            if ($count > 0) {
-                return response()->json(['status' => 'error', 'message' => 'can\'t delete this it have product !']);
-            } else {
-
-                $sub_category = SubCategory::find($id);
-
-                if (file_exists('images/sub_category/icon/'.$sub_category->icon) && ! empty($sub_category->icon)) {
-
-                    unlink('images/sub_category/icon/'.$sub_category->icon);
-
-                }
-
-                $sub_category->delete();
-
-                //  clear home page category cache
-                Cache::forget('all-category');
-
-                return response()->json(['status' => 'success', 'message' => 'Delete Successfull !']);
-
-            }
-
-        } catch (\Exception $e) {
-            // return $e;
-            return response()->json(['status' => 'error', 'message' => 'Something Went Wrong !']);
+        if ($count_subsubcategory > 0) {
+            return response()->json(['status' => 'error', 'message' => 'Can\'t delete the sub category; it has sub-subcategories.']);
         }
 
+        try {
+            $subCategory = SubCategory::findOrFail($id);
+
+            $oldImagePath = public_path('images/category/subcategory/icon/' . $subCategory->icon);
+            if (!empty($subCategory->icon) && file_exists($oldImagePath)) {
+                @unlink($oldImagePath);
+            }
+
+            $subCategory->delete();
+            Cache::forget('all-category');
+
+            return response()->json(['status' => 'success', 'message' => 'Sub Category Deleted']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Something Went Wrong!', 'debug' => $e->getMessage()], 500);
+        }
     }
 }

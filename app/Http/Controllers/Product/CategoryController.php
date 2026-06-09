@@ -6,24 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Product\CategoryResource;
 use App\Models\Category;
 use App\Models\SubCategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(): View
     {
         return view('admin.category.category');
     }
 
-    public function categoryList(Request $request)
+    public function categoryList(Request $request): AnonymousResourceCollection
     {
-
         $category = Category::orderBy('updated_at', 'desc');
 
         if ($request->keyword != '') {
@@ -33,14 +33,11 @@ class CategoryController extends Controller
         }
 
         $category = $category->paginate(10);
-
         return CategoryResource::collection($category);
     }
 
     /**
      * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function create()
     {
@@ -49,29 +46,23 @@ class CategoryController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $request->validate([
-
-            'name'  => 'required|unique:categories,category_name',
+            'name' => 'required|unique:categories,category_name',
             'image' => 'required|image64:jpeg,jpg,png,gif',
         ],
             [
                 'image.image64' => 'File must be an image of jpeg,png,gif',
             ]);
 
-        try
-        {
-
+        try {
             $category = new Category;
 
-            $category->category_name        = $request->name;
+            $category->category_name = $request->name;
             $category->category_native_name = $request->native_name;
-            $category->status               = $request->status;
+            $category->status = $request->status;
 
             $imageData = $request->get('image');
 
@@ -82,26 +73,17 @@ class CategoryController extends Controller
 
             $category->save();
 
-            //  clear home page category cache
+            // clear home page category cache
             Cache::forget('all-category');
 
             return response()->json(['status' => 'success', 'message' => 'Category Added Successfully !']);
-
         } catch (\Exception $e) {
-
-            // return $e;
-
-            return response()->json(['status' => 'error', 'message' => 'Opps Something Went Wrong!']);
-
+            return response()->json(['status' => 'error', 'message' => 'Opps Something Went Wrong!', 'debug' => $e->getMessage()], 500);
         }
-
     }
 
     /**
      * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
@@ -110,49 +92,37 @@ class CategoryController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit($id): CategoryResource
     {
         return new CategoryResource(Category::find($id));
     }
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): JsonResponse
     {
         $request->validate([
-
-            'name'  => 'required|unique:categories,category_name,' . $id . ',id',
+            'name' => 'required|unique:categories,category_name,' . $id . ',id',
             'image' => 'nullable|image64:jpeg,jpg,png,gif',
         ],
             [
                 'image.image64' => 'File must be an image of jpeg,png,gif',
             ]);
 
-        try
-        {
-
-            $category = Category::find($id);
-
-            $category->category_name        = $request->name;
+        try {
+            $category = Category::findOrFail($id);
+            $category->category_name = $request->name;
             $category->category_native_name = $request->native_name;
-            $category->status               = $request->status;
+            $category->status = $request->status;
 
             $imageData = $request->get('image');
 
             if ($imageData) {
-
-                if (file_exists('images/category/icon/' . $category->icon) && !empty($category->icon)) {
-
-                    unlink('images/category/icon/' . $category->icon);
+                $oldImagePath = public_path('images/category/icon/' . $category->icon);
+                if (!empty($category->icon) && file_exists($oldImagePath)) {
+                    @unlink($oldImagePath);
                 }
 
                 $fileName = storeBase64Image($imageData, 'category/icon');
@@ -165,53 +135,39 @@ class CategoryController extends Controller
             Cache::forget('all-category');
 
             return response()->json(['status' => 'success', 'message' => 'Category  Successfully Updated!']);
-
         } catch (\Exception $e) {
-
-            // return $e;
-
-            return response()->json(['status' => 'error', 'message' => 'Opps Something Went Wrong!']);
-
+            return response()->json(['status' => 'error', 'message' => 'Opps Something Went Wrong!', 'debug' => $e->getMessage()], 500);
         }
     }
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy($id): JsonResponse
     {
+        // if it has sub category then it can't be deleted
+        $count_subcategory = SubCategory::where('category_id', '=', $id)->count();
 
-        // if it have sub category then it can't be delete
-
-        $count_subacategory = SubCategory::where('category_id', '=', $id)->count();
-
-        if ($count_subacategory > 0) {
-
-            return response()->json(['status' => 'error', 'message' => 'Can\'t delete the category it have sub category']);
-
+        if ($count_subcategory > 0) {
+            return response()->json(['status' => 'error', 'message' => 'Can\'t delete the category; it has subcategories.']);
         }
 
-        try
-        {
-            $category = Category::find($id);
+        try {
+            $category = Category::findOrFail($id);
 
-            if (file_exists('images/category/icon/' . $category->icon) && !empty($category->icon)) {
-
-                unlink('images/category/icon/' . $category->icon);
+            $oldImagePath = public_path('images/category/icon/' . $category->icon);
+            if (!empty($category->icon) && file_exists($oldImagePath)) {
+                @unlink($oldImagePath);
             }
 
             $category->delete();
 
-            //  clear home page category cache
+            // clear home page category cache
             Cache::forget('all-category');
 
             return response()->json(['status' => 'success', 'message' => 'Category Deleted']);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Something Went Wrong !']);
+            return response()->json(['status' => 'error', 'message' => 'Something Went Wrong !', 'debug' => $e->getMessage()], 500);
         }
-
     }
 }
