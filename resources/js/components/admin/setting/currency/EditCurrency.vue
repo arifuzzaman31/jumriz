@@ -52,127 +52,70 @@
 
 </template>
 
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import axios from 'axios';
+import { emitter, base_url } from '../../../../vue-assets';
+import { useCommonActions } from '../../../../useCommonActions';
 
-<script>
-	
-	import {EventBus} from  '../../../../vue-assets';
+const { successMessage, validationError } = useCommonActions();
 
-	import Mixin from  '../../../../mixin';
-	
+const currency = ref({
+    id: '',
+    currency: '',
+    country: '',
+    code: '',
+    symbol: '',
+});
 
-	export default {
+const button_name = ref("Update");
+const validation_error = ref(null);
 
-		mixins : [Mixin],
+const save = async () => {
+    button_name.value = "updating...";
+    try {
+        const response = await axios.post(base_url + 'admin/setting/currency/update/' + currency.value.id, currency.value);
+        if (response.data.status === 'success') {
+            $('#update-currency').modal('hide');
+            resetForm();
+            successMessage(response.data);
+            emitter.emit('currency-created');
+            button_name.value = "Update";
+        } else {
+            successMessage(response.data);
+            button_name.value = "Save";
+        }
+    } catch (err) {
+        if (err.response && err.response.status == 422) {
+            validation_error.value = err.response.data.errors;
+            validationError();
+            button_name.value = "Update";
+        } else {
+            successMessage(err);
+            button_name.value = "Save";
+        }
+    }
+};
 
-		data(){
+const resetForm = () => {
+    currency.value = {
+        id: '',
+        currency: '',
+        country: '',
+        code: '',
+        symbol: '',
+    };
+    validation_error.value = null;
+};
 
-			return {
+onMounted(() => {
+    emitter.on('update-currency', (value) => {
+        currency.value = { ...value };
+        $('#update-currency').modal('show');
+    });
+});
 
-				currency     : {
-
-					'id'       : '',  
-					'currency' : '',  
-					'country'  : '',  
-					'code'     : '',  
-					'symbol'   : '',   
-
-				},
-
-				button_name      : "Update",
-				validation_error :  null, 
-
-			}
-
-		},
-
-		mounted()
-		{
-
-			var _this = this;
-
-			EventBus.$on('update-currency',function(value){
-             _this.currency = value;
-
-             $('#update-currency').modal('show');
-			});
-
-		},
-
-
-		methods : {
-
-			save(){
-
-             this.button_name = "updating...";
-
-                 
-             axios.post(base_url+'admin/setting/currency/update/'+this.currency.id,this.currency)
-                .then(response => {
-
-                    if(response.data.status === 'success'){
-
-
-                    $('#update-currency').modal('hide');
-
-                    this.resetForm();
-                    this.successMessage(response.data);
-                    EventBus.$emit('currency-created');
-
-                    this.button_name = "Update";
-
-
-					}
-				   else
-				    {
-					  this.successMessage(response.data);	
-					  this.button_name = "Save";
-					}						
-
-                    
-                })
-                .catch(err => {
-
-                 if (err.response.status == 422) {
-
-                    this.validation_error = err.response.data.errors;
-
-                    this.validationError();
-
-                    this.button_name = "Update";
-                } 
-                else 
-                {
-
-                    this.successMessage(err);
-
-                    this.isloading = false;
-
-                    this.button_name = "Save";
-                }
-             })
-
-         },
-
-         resetForm(){
-          
-          this.currency = {
-
-					'id'            : '',  
-					'currency'      : '',  
-					'country'       : '',  
-					'code'          : '',  
-					'symbol'        : '',  
-
-				}
-
-		  this.validation_error = null;		
-
-         }
-
-
-
-     }
-
- }
-
+onUnmounted(() => {
+    emitter.off('update-currency');
+});
 </script>

@@ -1,18 +1,25 @@
-require('./vue-assets');
-Vue.component('create-currency', require('./components/admin/setting/currency/CreateCurrency.vue').default);
-Vue.component('view-currency', require('./components/admin/setting/currency/ViewCurrency.vue').default);
+import { base_url } from './vue-assets';
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import VueLazyload from 'vue3-lazyload';
 
-import VueLazyload from 'vue-lazyload';
- 
-Vue.use(VueLazyload,{
+import CreateCurrency from './components/admin/setting/currency/CreateCurrency.vue';
+import ViewCurrency from './components/admin/setting/currency/ViewCurrency.vue';
 
- loading: base_url+'images/loading.gif',
+// Initialize the Vue 3 Application instance
+const app = createApp({});
 
+// Initialize Pinia
+app.use(createPinia());
+
+// Register Global Components on the instance
+app.component('create-currency', CreateCurrency);
+app.component('view-currency', ViewCurrency);
+
+// Inject plugins
+app.use(VueLazyload, {
+    loading: base_url + 'images/loading.gif',
 });
 
-var app = new Vue({
-
-    el: '#wrapper'
-});
-
-
+// Mount to the DOM container element
+app.mount('#wrapper');

@@ -25,10 +25,10 @@
 	                            <tbody>
 	                            <tr v-for="(value,index) in customer_order" :key="index">
 	                            	<td>{{ value.id }}</td>
-	                                <td>{{ value.order_date | dateToString }}</td>
+	                                <td>{{ dateToString(value.order_date) }}</td>
 	                                <td>{{ value.user.name }}</td>
 	                                <td>{{ value.total_item }}</td>
-	                                <td>{{ value.total_amount | formatPrice }}</td>
+	                                <td>{{ formatPrice(value.total_amount) }}</td>
 	                                <td>
 	                                	<span v-if="value.payment_status == 1">Paid</span>
                                 		<span v-else>Unpaid</span>
@@ -59,22 +59,22 @@
 </template>
 
 <script>
-	
-	import {EventBus} from  '../../../vue-assets';
-
-	import Mixin from  '../../../mixin';
-	import Pagination from  '../pagination/Pagination';
-	// import showOrderDetails from './ShowOrderDetails';
+	import { base_url, emitter } from '../../../vue-assets';
+	import { useCommonActions } from '../../../composables/useCommonActions';
+	import Pagination from '../pagination/Pagination.vue';
 
 	export default {
-
-		mixins : [Mixin],
+		setup() {
+			const { dateToString, formatPrice } = useCommonActions();
+			return {
+				dateToString,
+				formatPrice
+			}
+		},
 
 		components : {
-         
-         'pagination' : Pagination,
-         // 'show-orderdetails' : showOrderDetails,
-
+            'pagination' : Pagination,
+            // 'show-orderdetails' : showOrderDetails,
         },
 
 		data(){
@@ -85,35 +85,34 @@
 				url : base_url,
 				customer_name : '',
 			}
-
 		},
 
 		mounted()
 		{
-         var _this = this;
-         EventBus.$on('customer-orders',function([id,name]){
-          $('#modal-order').modal('show');
-         	_this.customer_name = name;
-           _this.getOrder(id);
+         emitter.on('customer-orders', ([id, name]) => {
+            $('#modal-order').modal('show');
+            this.customer_name = name;
+            this.getOrder(id);
          });
-
 		},
 
+        unmounted() {
+            emitter.off('customer-orders');
+        },
 
 		methods : {
             getOrder(id){
              this.isLoading = true
              axios.get(base_url+'admin/customer/'+id+'/show')
                 .then(response => {
-                	this.isLoading = false
                 	this.customer_order = response.data;
-                	console.log(response.data)
+                })
+                .finally(() => {
+                    this.isLoading = false;
                 });
             },
         }
-
     }
-
 </script>
 
 <style scoped="">

@@ -51,113 +51,57 @@
 							</div>
 
 </template>
+<script setup>
+import { ref } from 'vue';
+import axios from 'axios';
+import { emitter, base_url } from '../../../../vue-assets';
+import { useCommonActions } from '../../../../useCommonActions';
 
+const { successMessage, validationError } = useCommonActions();
 
-<script>
-	
-	import {EventBus} from  '../../../../vue-assets';
+const currency = ref({
+    currency: '',
+    country: '',
+    code: '',
+    symbol: '',
+});
 
-	import Mixin from  '../../../../mixin';
-	
+const button_name = ref("Save");
+const validation_error = ref(null);
 
-	export default {
+const save = async () => {
+    button_name.value = "Saving...";
+    try {
+        const response = await axios.post(base_url + 'admin/setting/currency', currency.value);
+        if (response.data.status === 'success') {
+            $('#modal-form').modal('hide');
+            resetForm();
+            successMessage(response.data);
+            emitter.emit('currency-created');
+            button_name.value = "Save";
+        } else {
+            successMessage(response.data);
+            button_name.value = "Save";
+        }
+    } catch (err) {
+        if (err.response && err.response.status == 422) {
+            validation_error.value = err.response.data.errors;
+            validationError();
+            button_name.value = "Save";
+        } else {
+            successMessage(err);
+            button_name.value = "Save";
+        }
+    }
+};
 
-		mixins : [Mixin],
-
-		data(){
-
-			return {
-
-				currency        : {
-
-					'currency' : '',  
-					'country'  : '',  
-					'code'          : '',  
-					'symbol'        : '',   
-
-				},
-
-				button_name      : "Save",
-				validation_error :  null, 
-
-			}
-
-		},
-
-
-		methods : {
-
-			save(){
-
-             this.button_name = "Saving...";
-
-                 
-             axios.post(base_url+'admin/setting/currency',this.currency)
-                .then(response => {
-
-                    if(response.data.status === 'success'){
-
-
-                    $('#modal-form').modal('hide');
-
-                    this.resetForm();
-                    this.successMessage(response.data);
-                    EventBus.$emit('currency-created');
-
-                    this.button_name = "Save";
-
-
-					}
-				   else
-				    {
-					  this.successMessage(response.data);	
-					  this.button_name = "Save";
-					}						
-
-                    
-                })
-                .catch(err => {
-
-                 if (err.response.status == 422) {
-
-                    this.validation_error = err.response.data.errors;
-
-                    this.validationError();
-
-                    this.button_name = "Save";
-                } 
-                else 
-                {
-
-                    this.successMessage(err);
-
-                    this.isloading = false;
-
-                    this.button_name = "Save";
-                }
-             })
-
-         },
-
-         resetForm(){
-          
-          this.currency = {
-
-					'currency'      : '',  
-					'country'       : '',  
-					'code'          : '',  
-					'symbol'        : '',  
-
-				}
-
-		  this.validation_error = null;		
-
-         }
-
-
-
-     }
-
- }
-
+const resetForm = () => {
+    currency.value = {
+        currency: '',
+        country: '',
+        code: '',
+        symbol: '',
+    };
+    validation_error.value = null;
+};
 </script>

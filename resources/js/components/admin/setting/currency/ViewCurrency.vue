@@ -98,151 +98,89 @@
 
     </div>
 </template>
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import axios from 'axios';
+import { emitter, base_url } from '../../../../vue-assets';
+import { useCommonActions } from '../../../../useCommonActions';
+import Pagination from '../../pagination/Pagination.vue';
+import UpdateCurrency from './EditCurrency.vue';
 
-<script>
+const { successMessage } = useCommonActions();
 
-    import { EventBus } from  '../../../../vue-assets';
+const currencies = ref([]);
+const isLoading = ref(false);
+const keyword = ref('');
+const url = base_url;
 
-    import Mixin from  '../../../../mixin';
+const getcurrency = async (page = 1) => {
+    isLoading.value = true;
+    try {
+        const response = await axios.get(base_url + 'admin/setting/currency-list?page=' + page + '&keyword=' + keyword.value);
+        currencies.value = response.data;
+    } catch (error) {
+        console.error(error);
+    } finally {
+        isLoading.value = false;
+    }
+};
 
-    import Pagination from  '../../pagination/Pagination';
+const pageClicked = (pageNo) => {
+    getcurrency(pageNo);
+};
 
-    import Updatecurrency from './EditCurrency';
-	
-	export default {
+const edit = (value) => {
+    emitter.emit('update-currency', value);
+};
 
-        mixins : [Mixin],
-
-        components : {
-         
-         'pagination' : Pagination,
-         'update-currency' : Updatecurrency,
-
-        },
-
-       data(){
-         
-         return {
-            
-            currencies : [],
-
-            isLoading : false,
-
-            keyword : '',
-
-            url : base_url,
-
-         }
-
-       },
-
-       mounted(){
-
-
-        // this  will not work in eventBus that why 
-        // we are initializing with _this
-
-        var _this = this;
-
-        _this.getcurrency();
-
-        EventBus.$on('currency-created',function(){
-
-            // getting updated data when insert update delete happend 
-
-        _this.getcurrency();
-
-
-        });
-
-
-
-       },
-
-       methods : {
-       
-
-        getcurrency(page = 1){
-
-           this.isLoading = true;
-         
-         axios.get(base_url+'admin/setting/currency-list?page='+page+'&keyword='+this.keyword)
-              .then(response => {
-               
-               this.currencies = response.data;
-               this.isLoading = false;
-
-              });
-
-        },
-
-        pageClicked(pageNo){
-        var vm = this;
-        vm.getcurrency(pageNo);
-        },
-
-        // edit currency 
-
-        edit(value){
-            EventBus.$emit('update-currency',value);
-        },
-
-        // delete currency 
-
-        deletecurrency(id){
-        Swal.fire({
-            title: 'Are you sure ?',
-            text: "You won't be able to revert this!",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        },() => {
-
-        }).then((result) => {
-            if (result.value) {
-
-                axios.get(base_url+'admin/setting/currency/'+id+'/delete')
+const deletecurrency = (id) => {
+    Swal.fire({
+        title: 'Are you sure ?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            axios.get(base_url + 'admin/setting/currency/' + id + '/delete')
                 .then(res => {
+                    successMessage(res.data);
+                    getcurrency();
+                });
+        }
+    });
+};
 
-                    this.successMessage(res.data);
-                    this.getcurrency();
-                })
-            }
-        }) 
-
-       },
-
-        makeCurrent(id){
-        Swal.fire({
-            title: 'Are you sure ?',
-            text: "This will be Set as your application currency!",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, Set it!'
-        },() => {
-
-        }).then((result) => {
-            if (result.value) {
-
-                axios.get(base_url+'admin/setting/current/currency/'+id)
+const makeCurrent = (id) => {
+    Swal.fire({
+        title: 'Are you sure ?',
+        text: "This will be Set as your application currency!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Set it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            axios.get(base_url + 'admin/setting/current/currency/' + id)
                 .then(res => {
+                    successMessage(res.data);
+                    getcurrency();
+                });
+        }
+    });
+};
 
-                    this.successMessage(res.data);
-                    this.getcurrency();
-                })
-            }
-        }) 
+onMounted(() => {
+    getcurrency();
+    emitter.on('currency-created', () => {
+        getcurrency();
+    });
+});
 
-       },
-
-
-
-       }
-
-	}
-
+onUnmounted(() => {
+    emitter.off('currency-created');
+});
 </script>

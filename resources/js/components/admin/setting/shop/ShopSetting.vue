@@ -252,167 +252,149 @@
     </div>
   </div>
 </template>
-
-<script>
-import { EventBus } from "../../../../vue-assets";
-import Mixin from "../../../../mixin";
+<script setup>
+import { ref, onMounted, onUnmounted, computed } from "vue";
+import axios from "axios";
+import { emitter, base_url } from "../../../../vue-assets";
+import { useCommonActions } from "../../../../useCommonActions";
 import { VueEditor } from "vue2-editor";
 
-export default {
-  mixins: [Mixin],
-  components:{
-    VueEditor
-  },
-  data() {
-    return {
-      form: {
-        shop_name: "",
-        shop_short_name: "",
-        address: "",
-        phone: "",
-        email: "",
-        return_policy: "",
-        footer_text: "",
-        header_logo: "",
-        footer_logo: "",
-        header_logo_view: "",
-        footer_logo_view: "",
-        favicon: "",
-        favicon_view: "",
-        facebook_link: "",
-        twitter_link: "",
-        youtube_link: "",
-        theme_color: "",
-        hot_deal_status: "",
-        slider_status: "",
-        onsale_status: "",
-        sidemenu_status: "",
-      },
+const { successMessage, validationError } = useCommonActions();
 
-      isLoading: false,
-      button_name: "update",
-      url: base_url,
-      validation_error: null,
-    };
-  },
+const form = ref({
+  shop_name: "",
+  shop_short_name: "",
+  address: "",
+  phone: "",
+  email: "",
+  return_policy: "",
+  footer_text: "",
+  header_logo: "",
+  footer_logo: "",
+  header_logo_view: "",
+  footer_logo_view: "",
+  favicon: "",
+  favicon_view: "",
+  facebook_link: "",
+  twitter_link: "",
+  youtube_link: "",
+  theme_color: "",
+  hot_deal_status: "",
+  slider_status: "",
+  onsale_status: "",
+  sidemenu_status: "",
+});
 
-  mounted() {
-    // this  will not work in eventBus that why
-    // we are initializing with _this
+const isLoading = ref(false);
+const button_name = ref("Update");
+const url = base_url;
+const validation_error = ref(null);
 
-    var _this = this;
+const themBg = computed(() => {
+  return {
+    background: form.value.theme_color,
+  };
+});
 
-    _this.getSetting();
-
-    EventBus.$on("shop-created", function () {
-      _this.getSetting();
-    });
-  },
-
-  methods: {
-    onHeaderImageChange(e) {
-      let files = e.target.files || e.dataTransfer.files;
-      if (!files.length) return;
-      this.createheaderImage(files[0]);
-    },
-    createheaderImage(file) {
-      let reader = new FileReader();
-      let vm = this;
-      reader.onload = (e) => {
-        vm.form.header_logo = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    },
-
-    onFooterImageChange(e) {
-      let files = e.target.files || e.dataTransfer.files;
-      if (!files.length) return;
-      this.createFooterImage(files[0]);
-    },
-    createFooterImage(file) {
-      let reader = new FileReader();
-      let vm = this;
-      reader.onload = (e) => {
-        vm.form.footer_logo = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    },
-
-    onFaviconChange(e) {
-      let files = e.target.files || e.dataTransfer.files;
-      if (!files.length) return;
-      this.createFavicon(files[0]);
-    },
-    createFavicon(file) {
-      let reader = new FileReader();
-      let vm = this;
-      reader.onload = (e) => {
-        vm.form.favicon = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    },
-
-    getSetting() {
-      axios
-        .get(base_url + "admin/setting/shop/" + 1 + "/edit")
-        .then((response) => {
-          this.form.shop_name = response.data.shop_name;
-          this.form.shop_short_name = response.data.shop_short_name;
-          this.form.address = response.data.address;
-          this.form.phone = response.data.phone;
-          this.form.email = response.data.email;
-          this.form.return_policy = response.data.return_policy;
-          this.form.footer_text = response.data.footer_text;
-          this.form.header_logo_view = response.data.logo_header;
-          this.form.footer_logo_view = response.data.logo_footer;
-          this.form.favicon_view = response.data.favicon;
-          this.form.facebook_link = response.data.facebook;
-          this.form.twitter_link = response.data.twitter;
-          this.form.youtube_link = response.data.youtube;
-          this.form.theme_color = response.data.theme_color;
-          this.form.hot_deal_status = response.data.hot_deal_status;
-          this.form.slider_status = response.data.slider_status;
-          this.form.onsale_status = response.data.onsale_status;
-          this.form.sidemenu_status = response.data.sidemenu_status;
-        });
-    },
-
-    save() {
-      this.button_name = "Updating...";
-
-      axios
-        .post(base_url + "admin/setting/shop", this.form)
-        .then((response) => {
-          if (response.data.status === "success") {
-            this.successMessage(response.data);
-            EventBus.$emit("shop-created");
-            this.button_name = "Update";
-            this.validation_error = null;
-          } else {
-            this.successMessage(response.data);
-            this.button_name = "Update";
-          }
-        })
-        .catch((err) => {
-          if (err.response.status == 422) {
-            this.validation_error = err.response.data.errors;
-            this.validationError();
-            this.button_name = "Update";
-          } else {
-            this.successMessage(err);
-
-            this.button_name = "Update";
-          }
-        });
-    },
-  },
-
-  computed: {
-    themBg() {
-      return {
-        background: this.form.theme_color,
-      };
-    },
-  },
+const onHeaderImageChange = (e) => {
+  let files = e.target.files || e.dataTransfer.files;
+  if (!files.length) return;
+  createheaderImage(files[0]);
 };
+const createheaderImage = (file) => {
+  let reader = new FileReader();
+  reader.onload = (e) => {
+    form.value.header_logo = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+const onFooterImageChange = (e) => {
+  let files = e.target.files || e.dataTransfer.files;
+  if (!files.length) return;
+  createFooterImage(files[0]);
+};
+const createFooterImage = (file) => {
+  let reader = new FileReader();
+  reader.onload = (e) => {
+    form.value.footer_logo = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+const onFaviconChange = (e) => {
+  let files = e.target.files || e.dataTransfer.files;
+  if (!files.length) return;
+  createFavicon(files[0]);
+};
+const createFavicon = (file) => {
+  let reader = new FileReader();
+  reader.onload = (e) => {
+    form.value.favicon = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+const getSetting = () => {
+  axios
+    .get(base_url + "admin/setting/shop/" + 1 + "/edit")
+    .then((response) => {
+      form.value.shop_name = response.data.shop_name;
+      form.value.shop_short_name = response.data.shop_short_name;
+      form.value.address = response.data.address;
+      form.value.phone = response.data.phone;
+      form.value.email = response.data.email;
+      form.value.return_policy = response.data.return_policy;
+      form.value.footer_text = response.data.footer_text;
+      form.value.header_logo_view = response.data.logo_header;
+      form.value.footer_logo_view = response.data.logo_footer;
+      form.value.favicon_view = response.data.favicon;
+      form.value.facebook_link = response.data.facebook;
+      form.value.twitter_link = response.data.twitter;
+      form.value.youtube_link = response.data.youtube;
+      form.value.theme_color = response.data.theme_color;
+      form.value.hot_deal_status = response.data.hot_deal_status;
+      form.value.slider_status = response.data.slider_status;
+      form.value.onsale_status = response.data.onsale_status;
+      form.value.sidemenu_status = response.data.sidemenu_status;
+    });
+};
+
+const save = () => {
+  button_name.value = "Updating...";
+  axios
+    .post(base_url + "admin/setting/shop", form.value)
+    .then((response) => {
+      if (response.data.status === "success") {
+        successMessage(response.data);
+        emitter.emit("shop-created");
+        button_name.value = "Update";
+        validation_error.value = null;
+      } else {
+        successMessage(response.data);
+        button_name.value = "Update";
+      }
+    })
+    .catch((err) => {
+      if (err.response && err.response.status == 422) {
+        validation_error.value = err.response.data.errors;
+        validationError();
+        button_name.value = "Update";
+      } else {
+        successMessage(err);
+        button_name.value = "Update";
+      }
+    });
+};
+
+onMounted(() => {
+  getSetting();
+  emitter.on("shop-created", () => {
+    getSetting();
+  });
+});
+
+onUnmounted(() => {
+  emitter.off("shop-created");
+});
 </script>

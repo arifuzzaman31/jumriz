@@ -68,158 +68,103 @@
                 </div>
         </div>
 </template>
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import axios from 'axios';
+import Multiselect from 'vue-multiselect';
+import { emitter, base_url } from '../../../../vue-assets';
+import { useCommonActions } from '../../../../useCommonActions';
 
-<script>
+const { successMessage, validationError } = useCommonActions();
 
-    import { EventBus } from  '../../../../vue-assets';
-    import Mixin from  '../../../../mixin';
-    import { VueEditor } from "vue2-editor";
-    import Multiselect from 'vue-multiselect'
-	
-	export default {
+const form = ref({
+    title: '',
+    meta_image: '',
+    view_image: '',
+    sitemap_link: '',
+    author: '',
+    description: '',
+    google_map: '',
+    seo_keyword: [],
+});
 
-        mixins : [Mixin],
-        components : {
-          Multiselect
-        },
+const isLoading = ref(false);
+const button_name = ref('Update');
+const url = base_url;
+const validation_error = ref(null);
+const tags = ref([]);
 
-       data(){
-         
-         return {
-            
-            form : {
+const onImageChange = (e) => {
+    let files = e.target.files || e.dataTransfer.files;
+    if (!files.length) return;
+    createImage(files[0]);
+};
 
-                title         :   '',
-                meta_image    :   '',
-                view_image    :   '',
-                sitemap_link  :   '',
-                author        :   '',
-                description   :   '',
-                google_map   :   '',
-                seo_keyword   :   [],
+const createImage = (file) => {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        form.value.meta_image = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
 
-            },
-
-            isLoading   : false,
-            button_name : 'update',
-            url : base_url,
-            validation_error : null,
-            tags : [],
-
-         }
-
-       },
-
-       mounted(){
-
-
-        // this  will not work in eventBus that why 
-        // we are initializing with _this
-
-        var _this = this;
-
-        _this.getSetting();
-
-        EventBus.$on('seo-created',function(){
-
-        _this.getSetting();
-
-
+const getSetting = () => {
+    axios.get(base_url + 'admin/setting/seo/' + 5 + '/edit')
+        .then(response => {
+            form.value.title = response.data.title;
+            form.value.view_image = response.data.meta_image;
+            form.value.sitemap_link = response.data.sitemap_link;
+            form.value.author = response.data.author;
+            form.value.description = response.data.description;
+            form.value.google_map = response.data.google_map;
+            form.value.seo_keyword = response.data.seo_keyword;
+            tags.value = response.data.seo_keyword;
         });
+};
 
+const addTag = (newTag) => {
+    const tag = {
+        keyword: newTag,
+        id: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
+    }
+    tags.value.push(tag);
+    form.value.seo_keyword.push(tag);
+};
 
+const save = () => {
+    button_name.value = "Updating...";
+    axios.post(base_url + 'admin/setting/seo', form.value)
+        .then(response => {
+            if (response.data.status === 'success') {
+                successMessage(response.data);
+                emitter.emit('seo-created');
+                button_name.value = "Update";
+                validation_error.value = null;
+            } else {
+                successMessage(response.data);
+                button_name.value = "Update";
+            }
+        })
+        .catch(err => {
+            if (err.response && err.response.status == 422) {
+                validation_error.value = err.response.data.errors;
+                validationError();
+                button_name.value = "Update";
+            } else {
+                successMessage(err);
+                button_name.value = "Update";
+            }
+        });
+};
 
-       },
+onMounted(() => {
+    getSetting();
+    emitter.on('seo-created', () => {
+        getSetting();
+    });
+});
 
-       methods : {
-            
-            onImageChange(e) {
-
-                let files = e.target.files || e.dataTransfer.files;
-                if (!files.length)
-                    return;
-                this.createImage(files[0]);
-
-            },
-            createImage(file) {
-                let reader = new FileReader();
-                let vm = this;
-                reader.onload = (e) => {
-                    vm.form.meta_image = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            },
-
-
-        getSetting(){
-
-  
-         
-         axios.get(base_url+'admin/setting/seo/'+5+'/edit')
-              .then(response => {
-               
-               this.form.title        = response.data.title;
-               this.form.view_image   = response.data.meta_image;
-               this.form.sitemap_link = response.data.sitemap_link;
-               this.form.author       = response.data.author;
-               this.form.description  = response.data.description;
-               this.form.google_map   = response.data.google_map;
-               this.form.seo_keyword  = response.data.seo_keyword;
-               this.tags              = response.data.seo_keyword;
-              });
-
-        },
-
-            addTag (newTag) {
-                const tag = {
-                    keyword: newTag,
-                    id: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
-                }
-                this.tags.push(tag)
-                this.form.seo_keyword.push(tag)
-            },
-         
-            save(){
-
-             this.button_name = "Updating...";
-
-                 
-             axios.post(base_url+'admin/setting/seo',this.form)
-                .then(response => {
-
-                    if(response.data.status === 'success'){
-                    this.successMessage(response.data);
-                    EventBus.$emit('seo-created');
-                    this.button_name = "Update";
-                    this.validation_error = null;
-                    }
-                    else
-                    {
-                    this.successMessage(response.data);
-                    this.button_name = "Update";
-                    }
-                    
-                })
-                .catch(err => {
-
-                 if (err.response.status == 422) 
-                 {
-                    this.validation_error = err.response.data.errors;
-                    this.validationError();
-                    this.button_name = "Update";
-                } 
-                else 
-                {
-
-                    this.successMessage(err);
-
-                    this.button_name = "Update";
-                }
-             })
-
-         },
-       }
-
-	}
-
+onUnmounted(() => {
+    emitter.off('seo-created');
+});
 </script>

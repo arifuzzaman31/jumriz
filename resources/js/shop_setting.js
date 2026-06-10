@@ -1,19 +1,33 @@
-require('./vue-assets');
-Vue.component('seo-setting', require('./components/admin/setting/seo/SeoSetting.vue').default);
-Vue.component('shop-setting', require('./components/admin/setting/shop/ShopSetting.vue').default);
+import { base_url } from './vue-assets';
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import VueLazyload from 'vue3-lazyload';
 
-Vue.component('trial-setting', require('./components/admin/setting/trial/TrialSetting.vue').default);
+import SeoSetting from './components/admin/setting/seo/SeoSetting.vue';
+import ShopSetting from './components/admin/setting/shop/ShopSetting.vue';
+import TrialSetting from './components/admin/setting/trial/TrialSetting.vue';
+import PwaSetting from './components/admin/setting/pwa/PwaSetting.vue';
+import DeliveryDateSlot from './components/admin/setting/slot/DeliveryDateSlot.vue';
+import CreateTimeSlot from './components/admin/setting/slot/CreateTimeSlot.vue';
+import ViewTimeSlot from './components/admin/setting/slot/ViewTimeSlot.vue';
 
-Vue.component('pwa-setting', require('./components/admin/setting/pwa/PwaSetting.vue').default);
+// Initialize the Vue 3 Application instance
+const app = createApp({});
 
-// delivery date time slot setting 
-Vue.component('date-slot-setting', require('./components/admin/setting/slot/DeliveryDateSlot.vue').default);
-Vue.component('create-time-slot', require('./components/admin/setting/slot/CreateTimeSlot.vue').default);
-Vue.component('view-time-slot', require('./components/admin/setting/slot/ViewTimeSlot.vue').default);
+// Initialize Pinia
+app.use(createPinia());
 
+// Register Global Components on the instance
+app.component('seo-setting', SeoSetting);
+app.component('shop-setting', ShopSetting);
+app.component('trial-setting', TrialSetting);
+app.component('pwa-setting', PwaSetting);
+app.component('date-slot-setting', DeliveryDateSlot);
+app.component('create-time-slot', CreateTimeSlot);
+app.component('view-time-slot', ViewTimeSlot);
 
-var app = new Vue({
-    el: '#wrapper'
-});
+// Inject plugins
+app.use(VueLazyload, { loading: base_url + 'images/loading.gif' });
 
-
+// Mount to the DOM container element
+app.mount('#wrapper');

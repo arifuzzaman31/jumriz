@@ -61,7 +61,7 @@
                                 <td>{{ value.email }}</td>
                                 <td>{{ value.phone }}</td>
                                 <td>{{ value.address }}</td>
-                                <td>{{ value.created_at | dateToString }}</td>
+                                <td>{{ dateToString(value.created_at) }}</td>
                                 <td>
                                     <a @click.prevent="viewOrder(value.id,value.name)" class="btn btn-primary" href="#"><i class="fa fa-eye" title="View Orders"></i></a> 
                                     <!-- <a @click.prevent="deletecustomer(value.id)" class="btn btn-danger" href="#">
@@ -96,17 +96,19 @@
 
 <script>
 
-    import { EventBus } from  '../../../vue-assets';
-
-    import Mixin from  '../../../mixin';
-
-    import Pagination from  '../pagination/Pagination';
-
+    import { base_url, emitter } from '../../../vue-assets';
+    import { useCommonActions } from '../../../composables/useCommonActions';
+    import Pagination from '../pagination/Pagination.vue';
     import showOrder from './ShowOrder';
 	
 	export default {
-
-        mixins : [Mixin],
+        setup() {
+            const { successMessage, dateToString } = useCommonActions();
+            return {
+                successMessage,
+                dateToString
+            }
+        },
 
         components : {
          
@@ -132,23 +134,15 @@
        },
 
        mounted(){
+        this.getcustomer();
 
-
-        // this  will not work in eventBus that why 
-        // we are initializing with _this
-
-        var _this = this;
-
-        _this.getcustomer();
-
-        EventBus.$on('customer-created',function(){
-            // getting updated data when insert update delete happend 
-        _this.getcustomer();
-
+        emitter.on('customer-created', () => {
+            this.getcustomer();
         });
+       },
 
-
-
+       unmounted() {
+           emitter.off('customer-created');
        },
 
        methods : {
@@ -176,7 +170,7 @@
 
         viewOrder(id,name){
           
-            EventBus.$emit('customer-orders',[id,name]); 
+            emitter.emit('customer-orders',[id,name]); 
         },
 
         // delete brand 

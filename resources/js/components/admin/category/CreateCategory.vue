@@ -1,5 +1,5 @@
 <template>
-	
+
 	<div id="modal-form" class="modal fade" aria-hidden="true">
 		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
@@ -8,190 +8,199 @@
 				</div>
 				<div class="modal-body">
 					<div class="row">
-						<div class="col-sm-8 b-r"><h3 class="m-t-none m-b">Add Category</h3>
+						<div class="col-sm-8 b-r">
+							<h3 class="m-t-none m-b">Add Category</h3>
 
 
 
 							<form @submit.prevent="save()" role="form">
 								<div class="form-group">
-									<label>Category Name *</label> 
-									<input v-model="category.name" type="text" placeholder="Category Name" class="form-control">
-								</div>									
+									<label>Category Name *</label>
+									<input v-model="category.name" type="text" placeholder="Category Name"
+										class="form-control">
+								</div>
 
 
 								<div class="form-group">
-									<label>Native Name</label> 
-									<input v-model="category.native_name" type="text" placeholder="Native Category Name" class="form-control">
-								</div>									
+									<label>Native Name</label>
+									<input v-model="category.native_name" type="text" placeholder="Native Category Name"
+										class="form-control">
+								</div>
 
 
 								<div class="form-group">
 									<label>Category Icon (128X128) *</label> <br>
 									<div class="fileinput fileinput-new" data-provides="fileinput">
-										<span class="btn btn-block btn-primary btn-file"><span class="fileinput-new"><i class="fa fa-camera"></i> Chose Icon</span>
-										<span class="fileinput-exists">Change Icon</span><input type="file" name="..." @change="onImageChange"/></span>
-                                  </div> 
-                                  </div>	
-
-
-									<div class="form-group">
-										<label>Status *</label> 
-										<select name="status" class="form-control" v-model="category.status">
-											<option value="1">Active</option>
-											<option value="0">Inactive</option>
-										</select>
+										<span class="btn btn-block btn-primary btn-file"><span class="fileinput-new"><i
+													class="fa fa-camera"></i> Chose Icon</span>
+											<span class="fileinput-exists">Change Icon</span><input type="file"
+												name="..." @change="onImageChange" /></span>
 									</div>
+								</div>
 
 
-									<div style="margin-bottom: 20px;">
-										<button  class="btn btn-lg  btn-primary float-right " type="submit"><strong>{{ button_name }}</strong></button>
-									</div>
-									</form>
-									</div>
-									<div class="col-sm-4"><h4>Photo Preview</h4>
+								<div class="form-group">
+									<label>Status *</label>
+									<select name="status" class="form-control" v-model="category.status">
+										<option value="1">Active</option>
+										<option value="0">Inactive</option>
+									</select>
+								</div>
 
-										<p class="text-center" v-if="category.image">
-											<img class="img-responsive img-fluid" :src="category.image">
-										</p>
-									</div>
 
-									<div class="col-md-12" v-if="validation_error" style="margin-top: 20px">
-										<div class="form-group">
+								<div style="margin-bottom: 20px;">
+									<button class="btn btn-lg  btn-primary float-right " type="submit"><strong>{{
+											button_name }}</strong></button>
+								</div>
+							</form>
+						</div>
+						<div class="col-sm-4">
+							<h4>Photo Preview</h4>
 
-											<div >
-												<ul>
-													<li class="text-danger" v-for="error in validation_error">{{ error[0] }}</li>
-												</ul>
-											</div>
+							<p class="text-center" v-if="category.image">
+								<img class="img-responsive img-fluid" :src="category.image">
+							</p>
+						</div>
 
-										</div>
-									</div>
+						<div class="col-md-12" v-if="validation_error" style="margin-top: 20px">
+							<div class="form-group">
+
+								<div>
+									<ul>
+										<li class="text-danger" v-for="error in validation_error">{{ error[0] }}</li>
+									</ul>
+								</div>
+
 							</div>
-							</div>
-							</div>
-							</div>
-							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
 </template>
 
 
 <script>
-	
-import {EventBus} from  '../../../vue-assets';
-import Mixin from  '../../../mixin';
-	
 
-	export default {
+import { base_url, emitter } from '../../../vue-assets';
+import { useCommonActions } from '../../../composables/useCommonActions';
 
-		mixins : [Mixin],
+export default {
+	setup() {
+		const { successMessage, validationError } = useCommonActions();
+		return {
+			successMessage,
+			validationError
+		}
+	},
 
-		data(){
+	data() {
 
-			return {
-				category : {
-					'name' : '',  
-					'native_name' : '',  
-					'image' : '',  
-					'status' : 1,
-				},
+		return {
+			category: {
+				'name': '',
+				'native_name': '',
+				'image': '',
+				'status': 1,
+			},
 
-				button_name : "Save",
-				validation_error : null, 
+			button_name: "Save",
+			validation_error: null,
 
-			}
+		}
+
+	},
+
+
+	methods: {
+
+		onImageChange(e) {
+
+			let files = e.target.files || e.dataTransfer.files;
+			if (!files.length)
+				return;
+			this.createImage(files[0]);
 
 		},
+		createImage(file) {
+			let reader = new FileReader();
+			let vm = this;
+			reader.onload = (e) => {
+				vm.category.image = e.target.result;
+			};
+			reader.readAsDataURL(file);
+		},
+
+		save() {
+
+			this.button_name = "Saving...";
 
 
-		methods : {
+			axios.post(base_url + 'admin/category', this.category)
+				.then(response => {
 
-			onImageChange(e) {
-
-				let files = e.target.files || e.dataTransfer.files;
-				if (!files.length)
-					return;
-				this.createImage(files[0]);
-
-			},
-			createImage(file) {
-				let reader = new FileReader();
-				let vm = this;
-				reader.onload = (e) => {
-					vm.category.image = e.target.result;
-				};
-				reader.readAsDataURL(file);
-			},
-
-			save(){
-
-             this.button_name = "Saving...";
-
-                 
-             axios.post(base_url+'admin/category',this.category)
-                .then(response => {
-
-                    if(response.data.status === 'success'){
+					if (response.data.status === 'success') {
 
 
-                    $('#modal-form').modal('hide');
+						$('#modal-form').modal('hide');
 
-                    this.resetForm();
-                    this.successMessage(response.data);
-                    EventBus.$emit('category-created');
+						this.resetForm();
+						this.successMessage(response.data);
+						emitter.emit('category-created');
 
-                    this.button_name = "Save";
+						this.button_name = "Save";
 
 
 					}
-				   else
-				   {
-					  this.successMessage(response.data);	
-					  this.button_name = "Save";
-					}					
-                    
-                })
-                .catch(err => {
+					else {
+						this.successMessage(response.data);
+						this.button_name = "Save";
+					}
 
-                 if (err.response.status == 422) {
+				})
+				.catch(err => {
 
-                    this.validation_error = err.response.data.errors;
+					if (err.response.status == 422) {
 
-                    this.validationError();
+						this.validation_error = err.response.data.errors;
 
-                    this.button_name = "Save";
-                } 
-                else 
-                {
+						this.validationError();
 
-                    this.successMessage(err);
+						this.button_name = "Save";
+					}
+					else {
 
-                    this.isloading = false;
+						this.successMessage(err);
 
-                    this.button_name = "Save";
-                }
-             })
+						this.isloading = false;
 
-         },
+						this.button_name = "Save";
+					}
+				})
 
-         resetForm(){
-          
-          this.category = {
+		},
 
-					'name' : '',  
-					'native_name' : '',  
-					'image' : '',  
-					'status' : 1,   
+		resetForm() {
 
-				}
+			this.category = {
 
-		  this.validation_error = null;		
+				'name': '',
+				'native_name': '',
+				'image': '',
+				'status': 1,
 
-         }
+			}
+
+			this.validation_error = null;
+
+		}
 
 
 
-     }
+	}
 
- }
+}
 
 </script>

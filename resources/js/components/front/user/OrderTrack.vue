@@ -82,10 +82,10 @@
 					                    <td>{{ value.product.product_name }} <br> <small>{{ value.product.quantity_unit }}</small></td>
 					                    <td>{{ value.quantity }}</td>
 					                    <td>
-					                    	{{ currency.symbol }} {{ value.selling_price | formatPrice }}
-                                         <span class="discount-price" v-if="value.unit_discount > 0">{{ currency.symbol }} {{ value.selling_price + value.unit_discount | formatPrice }}</span>
+					                    	{{ currency.symbol }} {{ formatPrice(value.selling_price) }}
+                                         <span class="discount-price" v-if="value.unit_discount > 0">{{ currency.symbol }} {{ formatPrice(value.selling_price + value.unit_discount) }}</span>
 					                    </td>
-					                    <td>{{ currency.symbol }} {{ value.total_selling_price | formatPrice }}</td>
+					                    <td>{{ currency.symbol }} {{ formatPrice(value.total_selling_price) }}</td>
 					                </tr>
 
 					             <tr class="no-border">
@@ -93,21 +93,21 @@
     								<td class="thick-line"></td>
     								<td class="thick-line"></td>
     								<td class="thick-line"><strong>Subtotal</strong></td>
-    								<td class="thick-line">{{ currency.symbol }} {{ order.total_amount | formatPrice }}</td>
+    								<td class="thick-line">{{ currency.symbol }} {{ formatPrice(order.total_amount) }}</td>
     							</tr>
     							<tr class="no-border">
     								<td class="no-line"></td>
     								<td class="no-line"></td>
     								<td class="no-line"></td>
     								<td class="no-line"><strong>Shipping</strong></td>
-    								<td class="no-line">{{ currency.symbol }} {{ order.shipping_amount | formatPrice }}</td>
+    								<td class="no-line">{{ currency.symbol }} {{ formatPrice(order.shipping_amount) }}</td>
     							</tr>
                                 <tr v-if="order.coupon_discount > 0">
                                     <td class="no-line"></td>
     								<td class="no-line"></td>
     								<td class="no-line"></td>
                                     <td class="no-line"><strong>Total :</strong></td>
-                                    <td class="no-line">{{ currency.symbol }}{{ (order.shipping_amount | formatPrice) + (order.total_amount | formatPrice) }}</td>
+                                    <td class="no-line">{{ currency.symbol }}{{ formatPrice(parseFloat(order.shipping_amount || 0) + parseFloat(order.total_amount || 0)) }}</td>
                                 </tr>
                                 <tr v-if="order.coupon_discount > 0">
                                     <td class="no-line"></td>
@@ -121,7 +121,7 @@
     								<td class="no-line"></td>
     								<td class="no-line"></td>
     								<td class="no-line"><strong>Grand Total</strong></td>
-    								<td class="no-line">{{ currency.symbol }} {{ ((order.shipping_amount | formatPrice) + (order.total_amount | formatPrice)) - order.coupon_discount }}</td>
+    								<td class="no-line">{{ currency.symbol }} {{ formatPrice(parseFloat(order.shipping_amount || 0) + parseFloat(order.total_amount || 0) - (order.coupon_discount || 0)) }}</td>
     							</tr>
                                 </tbody>
                             </table>
@@ -136,14 +136,18 @@
 </template>
 
 <script>
-	
-	import {EventBus} from  '../../../vue-assets';
-	import Mixin from  '../../../mixin';
-
+	import { base_url, emitter } from '../../../vue-assets';
+	import { useCommonActions } from '../../../composables/useCommonActions';
 
 	export default {
 		props : ['currency'],
-		mixins : [Mixin],
+		setup() {
+			const { formatPrice } = useCommonActions();
+			return {
+				formatPrice
+			}
+		},
+
 		data(){
 			return {
 

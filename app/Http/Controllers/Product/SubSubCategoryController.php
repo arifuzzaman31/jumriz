@@ -161,7 +161,7 @@ class SubSubCategoryController extends Controller
     /**
      * Show data structure for editing.
      */
-    public function edit($id): string
+    public function edit($id): JsonResponse
     {
         $sub_sub_category = SubSubCategory::findOrFail($id);
         $sub_category = SubCategory::where('category_id', $sub_sub_category->category_id)->get();
@@ -176,7 +176,7 @@ class SubSubCategoryController extends Controller
             ->whereIn('id', $brand_id)
             ->get();
 
-        return json_encode([
+        return response()->json([
             'sub_sub_category' => $sub_sub_category,
             'sub_category'     => $sub_category,
             'selected_brand'   => $selected_brand,
