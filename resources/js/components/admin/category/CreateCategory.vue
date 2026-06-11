@@ -85,7 +85,7 @@
 <script>
 
 import { base_url, emitter } from '../../../vue-assets';
-import { useCommonActions } from '../../../composables/useCommonActions';
+import { useCommonActions } from '../../../useCommonActions';
 
 export default {
 	setup() {

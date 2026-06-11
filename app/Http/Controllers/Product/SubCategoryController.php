@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\AllStatic;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Product\SubCategoryResource;
 use App\Models\Category;
@@ -20,7 +21,8 @@ class SubCategoryController extends Controller
      */
     public function index(): View
     {
-        return view('admin.category.sub_category');
+        $category = Category::where('status', '=', AllStatic::$active)->get();
+        return view('admin.subcategory.subcategory',['category' => $category]);
     }
 
     public function subCategoryList(Request $request): AnonymousResourceCollection

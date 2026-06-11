@@ -21,7 +21,8 @@ export const useCartStore = defineStore('cart', {
         async getCart() {
             this.loading = true;
             try {
-                const response = await axios.get('/api/cart');
+                // const response = await axios.get('/api/cart');
+                const response = await axios.get('/cart-items');
                 // Instead of commit('SET_CART', data), modify state directly
                 this.cart_items = response.data;
             } catch (err) {

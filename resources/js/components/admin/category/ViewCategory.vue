@@ -98,9 +98,9 @@
 
     import Mixin from  '../../../mixin';
 
-    import Pagination from  '../pagination/Pagination';
+    import Pagination from  '../pagination/Pagination.vue';
 
-    import UpdateCategory from './EditCategory';
+    import UpdateCategory from './EditCategory.vue';
 	
 	export default {
 

@@ -148,7 +148,7 @@ class WebController extends Controller
             }])
             ->find($id);
 
-        return view('front.sub-category.sub_category',
+        return view('front.subcategory.sub_category',
             [
                 'sub_category' => new SubCategoryResource($sub_category),
             ]);

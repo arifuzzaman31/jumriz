@@ -41,5 +41,4 @@
 
     })
 </script>
- <script src="{{ asset('js/sub_category.js') }}"></script>
 @endpush

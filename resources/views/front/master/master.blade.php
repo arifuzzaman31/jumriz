@@ -113,6 +113,7 @@
 
   @endif
   <!-- google analytics  -->
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body id="app_body">

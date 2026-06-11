@@ -6,6 +6,9 @@ import VueLazyload from 'vue3-lazyload';
 import CreateAdmin from './components/admin/admin/CreateAdmin.vue';
 import ViewAdmin from './components/admin/admin/ViewAdmin.vue';
 
+import CreateCategory from './components/admin/category/CreateCategory.vue';
+import ViewCategory from './components/admin/category/ViewCategory.vue';
+
 // Initialize the Vue 3 Application instance
 const app = createApp({});
 
@@ -15,6 +18,8 @@ app.use(createPinia());
 // Register Global Components on the instance
 app.component('create-admin', CreateAdmin);
 app.component('view-admin', ViewAdmin);
+app.component('create-category', CreateCategory);
+app.component('view-category', ViewCategory);
 
 // Inject plugins using the new app.use() chain syntax
 app.use(VueLazyload, {

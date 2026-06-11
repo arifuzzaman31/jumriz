@@ -9,7 +9,7 @@
     <link rel="shortcut icon" href="{{ asset('images/logo/'.$shop_info->favicon) }}" />
     <!-- <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet'> -->
     <title>@yield('title','Jumriz')</title>
-
+    @vite(['resources/css/app.css', 'resources/js/admin.js'])
     @include('admin.include.header_asset')
 
     <style>
@@ -70,10 +70,7 @@
             min-height: 42px !important;
             width: 100% !important;
         }
-    </style>
-
-
-
+        </style>
 
 </head>
 

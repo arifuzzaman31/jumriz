@@ -25,8 +25,21 @@ window.Swal = Swal;
 // In Vue 3, Vue is no longer exposed globally like this because 
 // everything mounts to isolated `createApp()` instances.
 
-// 4. FIXING THE EVENT BUS FOR VUE 3
-// Vue 3 completely removed '$on', '$off', and '$once' methods from the core instance.
-// To keep an Event Bus working, you should use a lightweight library like 'mitt'.
+// 4. Event Bus for Vue 3
+// Vue 3 removed the Vue 2 instance event methods ($on/$emit/$off/$once).
+// This wrapper keeps the existing project-wide EventBus API working.
 import mitt from 'mitt';
 export const emitter = mitt();
+
+export const EventBus = {
+    $on: emitter.on.bind(emitter),
+    $off: emitter.off.bind(emitter),
+    $once(type, handler) {
+        const wrappedHandler = (event) => {
+            this.$off(type, wrappedHandler);
+            handler(event);
+        };
+        this.$on(type, wrappedHandler);
+    },
+    $emit: emitter.emit.bind(emitter),
+};
