@@ -1,0 +1,45 @@
+services:
+  app:
+    build: .
+    container_name: laravel_dev_app
+    ports:
+      - "80:80"
+      - "5173:5173"      # Vite dev server port
+    volumes:
+      - .:/var/www/html
+      - ./.env:/var/www/html/.env
+      - ./apache-config.conf:/etc/apache2/sites-available/000-default.conf
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html/public
+    networks:
+      - app-network
+    depends_on:
+      - db
+    restart: unless-stopped
+
+
+  # Database Server
+  # Your matching MySQL Service Layer Configuration
+  db:
+    image: mysql:8.0
+    container_name: laravel_mysql_db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: jumriz_db
+      MYSQL_ROOT_PASSWORD: secret      # Root super-admin pass
+      MYSQL_USER: jumriz_user
+      MYSQL_PASSWORD: secret           # App user pass
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
