@@ -1,166 +1,153 @@
 <template>
-	<div id="modal-form" class="modal fade" >
-		<div class="modal-dialog modal-lg modal-custom">
-			<div class="modal-content">
-				<div class="modal-header ">
-					<h3 class="m-t-none m-b">Add Color</h3>
-					<button class="btn btn-default text-right" data-dismiss="modal">X</button>
-				</div>
-				<div class="modal-body">
-					<form @submit.prevent="save()">
-						<div class="row">
-							<div class="col-md-12" v-if="validation_error" style="margin-top: 20px">
-								<div class="form-group">
+    <div id="modal-form" class="modal fade">
+        <div class="modal-dialog modal-lg modal-custom">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="m-t-none m-b">Add Color</h3>
+                    <button class="btn btn-default text-right" data-dismiss="modal">X</button>
+                </div>
+                
+                <div class="modal-body">
+                    <form @submit.prevent="save">
+                        <!-- Validation Errors -->
+                        <div class="row" v-if="validationError">
+                            <div class="col-md-12" style="margin-top: 20px">
+                                <div class="form-group">
+                                    <ul>
+                                        <li class="text-danger" v-for="(error, index) in validationError" :key="index">
+                                            {{ error[0] }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
 
-									<div>
-										<ul>
-											<li class="text-danger" v-for="error in validation_error" :key="error[0]">{{ error[0] }}</li>
-										</ul>
-									</div>
+                        <!-- Form Fields -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Color Name *</label> 
+                                    <input 
+                                        type="text" 
+                                        v-model="form.name"  
+                                        class="form-control" 
+                                        placeholder="Color Name"
+                                        required
+                                    >
+                                </div>
+                            </div>						
 
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-md-4">
-								<div class="form-group">
-									<label>Color Name*</label> 
-									<input type="text" v-model="form.name"   class="form-control" placeholder="Color Name">
-								</div>
-						    </div>						
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Color *</label> 
+                                    <input 
+                                        type="color" 
+                                        v-model="form.color_code"  
+                                        class="form-control form-control-color"
+                                    >
+                                </div>
+                            </div>	
 
-						    <div class="col-md-4">
-								<div class="form-group">
-									<label>Color*</label> 
-									<input type="color" v-model="form.color_code"   class="form-control" placeholder="Select Color">
-								</div>
-							</div>	
-						    <div class="col-md-4">
-								<div class="form-group">
-									<label>Color Code*</label> 
-									<input type="text" v-model="form.color_code" class="form-control" placeholder="Color Code">
-								</div>
-							</div>	
-						</div>	
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Color Code *</label> 
+                                    <input 
+                                        type="text" 
+                                        v-model="form.color_code" 
+                                        class="form-control" 
+                                        placeholder="#FFFFFF"
+                                        required
+                                    >
+                                </div>
+                            </div>	
+                        </div>	
 
-					 	<div class="row">								
-							<div class="col-md-12 text-right">
-								<button type="submit" class="btn btn-primary">{{ button_name }}</button>
-								<button type="close" class="btn btn-default" data-dismiss="modal">Close</button>
-							</div>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
-	</div>
+                     	<!-- Buttons -->
+                        <div class="row">								
+                            <div class="col-md-12 text-right" style="margin-top: 15px;">
+                                <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                                    {{ buttonName }}
+                                </button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
-<script>
-	
-	import {EventBus} from  '../../../../vue-assets';
-	import Mixin from  '../../../../mixin';
+<script setup>
+import { ref, reactive } from 'vue';
+import { EventBus, base_url } from '../../../../vue-assets';
+import Mixin from '../../../../mixin';
 
-	export default {
+// ✅ Reactive State
+const form = reactive({
+    name: '',  
+    color_code: ''
+});
 
-		mixins : [Mixin],
+const buttonName = ref("Save");
+const validationError = ref(null);
+const isLoading = ref(false);
 
-		data(){
-
-			return {
-
-				form : {
-					name : '',  
-					color_code : ''
-				},
-
-				button_name : "Save",
-				validation_error : null, 
-				isLoading: false,
-			}
-
-		},
-
-
-		methods : {
-            save(){
-				// this.colorCodeValidation(this.form.color_code)
-				var code = this.form.color_code.trim();
-				if((code.indexOf('#') > 0) || (code.indexOf('#') != 0) || (code.length !=7)){
-					this.successMessage({'status' : 'error', 'message' : 'Enter Invalid Color Code!'});
-					return ;
-				}
-            	this.button_name = "Saving...";
-            	axios.post(base_url+'admin/product-color',this.form)
-            	.then(response => {
-            		if(response.data.status === 'success'){
-            			$('#modal-form').modal('hide');
-            			this.resetForm();
-            			EventBus.$emit('color-created');
-            			this.successMessage(response.data);
-            			this.button_name = "Save";
-					}
-				   else
-				   {
-					  this.successMessage(response.data);	
-					  this.button_name = "Save";
-					}
-
-            	})
-            	.catch(err => {
-
-            		if (err.response.status == 422) 
-            		{
-
-            			this.validation_error = err.response.data.errors;
-
-                        this.validationError();
-
-            			this.button_name = "Save";
-            		} 
-            		else 
-            		{
-
-            			this.successMessage(err);
-                        
-						// this.isloading = false;
-						this.button_name = "Save";
-					}
-				})
-
-			},
-
-            resetForm(){
-
-            	this.form = {
-					name : '',  
-					color_code : ''
-				};
-
-				this.validation_error = null;
-				this.isLoading = false;
-
-            },
-
-        },
-
+// ✅ Methods
+const save = async () => {
+    const code = form.color_code.trim();
+    
+    // ✅ Cleaned up validation logic
+    if (!code.startsWith('#') || code.length !== 7) {
+        Mixin.methods.successMessage({ status: 'error', message: 'Enter a valid Color Code (e.g., #000000)!' });
+        return;
     }
 
+    isLoading.value = true;
+    buttonName.value = "Saving...";
+
+    try {
+        const response = await axios.post(`${base_url}admin/product-color`, form);
+        
+        if (response.data.status === 'success') {
+            if (typeof $ !== 'undefined') {
+                $('#modal-form').modal('hide');
+            }
+            resetForm();
+            EventBus.$emit('color-created');
+            Mixin.methods.successMessage(response.data);
+            buttonName.value = "Save";
+        } else {
+            Mixin.methods.successMessage(response.data);	
+            buttonName.value = "Save";
+        }
+    } catch (err) {
+        if (err.response?.status === 422) {
+            validationError.value = err.response.data.errors;
+            Mixin.methods.validationError?.();
+            buttonName.value = "Save";
+        } else {
+            Mixin.methods.successMessage(err);
+            buttonName.value = "Save";
+        }
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const resetForm = () => {
+    form.name = '';
+    form.color_code = '';
+    validationError.value = null;
+};
 </script>
 
-<style scoped="">
-
-@media screen and (max-width: 573px)
-{
-
-
-	.modal-custom {
-
-		max-width: 100% !important;
-		background-color: #000 !important;
-	}
-
-
-
+<style scoped>
+/* Responsive modal fix for mobile */
+@media screen and (max-width: 573px) {
+    .modal-custom {
+        max-width: 100% !important;
+        background-color: #000 !important;
+    }
 }
 </style>

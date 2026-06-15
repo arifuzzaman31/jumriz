@@ -3,8 +3,8 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import VueLazyload from 'vue3-lazyload';
 
-import CreateSubCategory from './components/admin/category/CreateSubCategory.vue';
-import ViewSubCategory from './components/admin/category/ViewSubCategory.vue';
+import CreateSubCategory from './components/admin/subcategory/CreateSubCategory.vue';
+import ViewSubCategory from './components/admin/subcategory/ViewSubCategory.vue';
 
 // Initialize the Vue 3 Application instance
 const app = createApp({});
@@ -13,8 +13,8 @@ const app = createApp({});
 app.use(createPinia());
 
 // Register Global Components on the instance
-app.component('create-sub-category', CreateSubCategory);
-app.component('view-sub-category', ViewSubCategory);
+app.component('create-subcategory', CreateSubCategory);
+app.component('view-subcategory', ViewSubCategory);
 
 // Inject plugins
 app.use(VueLazyload, {

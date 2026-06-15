@@ -17,7 +17,7 @@
                 <!-- Category Select -->
                 <div class="form-group">
                   <label>Choose Category *</label>
-                  <select v-model="subcategory.category" class="form-control" required>
+                  <select v-model="subcategory.category_id" class="form-control" required>
                     <option value="">Please Choose a Category</option>
                     <option 
                       v-for="value in categories" 
@@ -141,7 +141,7 @@ const validationError = ref(null);
 
 const subcategory = reactive({
   id: '',
-  category: '',
+  category_id: '',
   name: '',
   native_name: '',
   image: '',
@@ -153,7 +153,7 @@ const subcategory = reactive({
 // ✅ Default values for reset
 const getDefaultSubcategory = () => ({
   id: '',
-  category: '',
+  category_id: '',
   name: '',
   native_name: '',
   image: '',
@@ -187,7 +187,7 @@ const getSubCategory = async (id) => {
     subcategory.native_name = data.sub_category_native_name;
     subcategory.view_image = data.image;
     subcategory.status = data.status;
-    subcategory.category = data.category_id;
+    subcategory.category_id = data.category_id;
   } catch (error) {
     console.error('Failed to fetch sub category:', error);
   }

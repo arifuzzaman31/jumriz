@@ -13,8 +13,8 @@ const app = createApp({});
 app.use(createPinia());
 
 // Register Global Components on the instance
-app.component('create-subcategory', CreateSubSubCategory);
-app.component('view-subcategory', ViewSubSubCategory);
+app.component('create-subsubcategory', CreateSubSubCategory);
+app.component('view-subsubcategory', ViewSubSubCategory);
 
 // Inject plugins
 app.use(VueLazyload, {

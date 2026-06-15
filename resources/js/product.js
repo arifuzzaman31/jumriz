@@ -1,24 +1,40 @@
-require('./vue-assets');
-Vue.component('create-product', require('./components/admin/product/CreateProduct.vue').default);
-Vue.component('view-product', require('./components/admin/product/ViewProduct.vue').default);
+import { base_url } from './vue-assets';
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import VueLazyload from 'vue3-lazyload';
 
-Vue.component('create-color', require('./components/admin/product/color/CreateColor.vue').default);
-Vue.component('view-color', require('./components/admin/product/color/ViewColor.vue').default);
+import CraeteProduct from './components/admin/product/CreateProduct.vue';
+import ViewProduct from './components/admin/product/ViewProduct.vue';
 
-Vue.component('create-size', require('./components/admin/product/size/CreateSize.vue').default);
-Vue.component('view-size', require('./components/admin/product/size/ViewSize.vue').default);
+import CreateColor from './components/admin/product/color/CreateColor.vue';
+import ViewColor from './components/admin/product/color/ViewColor.vue';
 
-import VueLazyload from 'vue-lazyload';
- 
-Vue.use(VueLazyload,{
+import CreateSize from './components/admin/product/size/CreateSize.vue';
+import ViewSize from './components/admin/product/size/ViewSize.vue';
 
- loading: base_url+'images/loading.gif',
+// Initialize the Vue 3 Application instance
+const app = createApp({});
 
+// Initialize Pinia
+app.use(createPinia());
+
+// Register Global Components on the instance
+app.component('create-product', CraeteProduct);
+app.component('view-product', ViewProduct);
+
+app.component('create-color', CreateColor);
+app.component('view-color', ViewColor);
+
+app.component('create-size', CreateSize);
+app.component('view-size', ViewSize);
+
+// Inject plugins
+
+app.use(VueLazyload, {
+    loading: base_url + 'images/loading.gif',
+    error: base_url + 'images/error.png',
 });
 
-var app = new Vue({
-
-    el: '#wrapper'
-});
-
+// Mount to the DOM container element
+app.mount('#wrapper');
 

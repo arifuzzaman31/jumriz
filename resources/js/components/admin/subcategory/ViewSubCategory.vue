@@ -110,14 +110,19 @@
       <div class="ibox animated fadeInRightBig" v-if="subCategories.meta">
         <pagination :pageData="subCategories.meta" />
       </div>
+
+      <!-- Edit Sub Category Modal -->
+      <EditSubCategory :categories="categories" />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { EventBus } from '../../../vue-assets.js';
-import Mixin from '../../../mixin';
+import { EventBus, base_url } from '../../../vue-assets.js';
+import { useCommonActions } from '../../../useCommonActions.js';
+import EditSubCategory from './EditSubCategory.vue';
+import Swal from 'sweetalert2';
 import Pagination from '../pagination/Pagination.vue';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.css';
@@ -136,6 +141,7 @@ const isLoading = ref(false);
 const keyword = ref('');
 const category = ref(null);
 const url = base_url;
+const { successMessage } = useCommonActions();
 
 // ✅ Methods
 const fetchSubCategories = async (page = 1) => {
@@ -158,6 +164,7 @@ const fetchSubCategories = async (page = 1) => {
 };
 
 const edit = (id) => {
+  // console.log('edit', id);
   EventBus.$emit('update-sub-category', id);
 };
 
@@ -175,7 +182,7 @@ const deleteCategory = (id) => {
       axios
         .get(`${base_url}admin/sub-category/delete/${id}`)
         .then((res) => {
-          Mixin.methods.successMessage(res.data);
+          successMessage(res.data);
           fetchSubCategories();
         })
         .catch((error) => {
