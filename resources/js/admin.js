@@ -30,10 +30,10 @@ app.component('create-category', CreateCategory);
 app.component('view-category', ViewCategory);
 app.component('create-brand', CreateBrand);
 app.component('view-brand', ViewBrand);
-app.component('create-sub-category', CreateSubCategory);
-app.component('view-sub-category', ViewSubCategory);
-app.component('create-subcategory', CreateSubSubCategory);
-app.component('view-subcategory', ViewSubSubCategory);
+app.component('create-subcategory', CreateSubCategory);
+app.component('view-subcategory', ViewSubCategory);
+app.component('create-subsubcategory', CreateSubSubCategory);
+app.component('view-subsubcategory', ViewSubSubCategory);
 // Inject plugins using the new app.use() chain syntax
 app.use(VueLazyload, {
     loading: base_url + 'images/loading.gif',

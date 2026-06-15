@@ -22,8 +22,8 @@
         </div>
 
         <div class="ibox-content">
+          <!-- Filters -->
           <div class="row">
-            <!-- Category Filter -->
             <div class="col-sm-4 m-b-xs">
               <multiselect
                 v-model="category"
@@ -33,13 +33,12 @@
                 :searchable="true"
                 open-direction="bottom"
                 placeholder="Filter By Category"
-                :options="categories || []"
+                :options="categories"
                 :disabled="false"
-                @update:modelValue="fetchSubCategories()"
+                @update:model-value="fetchSubCategories"
               />
             </div>
 
-            <!-- Keyword Search -->
             <div class="col-sm-3">
               <div class="input-group">
                 <input
@@ -47,15 +46,14 @@
                   placeholder="Search By Name"
                   type="text"
                   class="form-control"
-                  @keyup="fetchSubCategories()"
+                  @keyup.enter="fetchSubCategories"
                 />
               </div>
             </div>
 
-            <!-- Clear Filter -->
             <div class="col-sm-5 m-b-xs">
-              <button @click="clearFilter()" class="btn btn-primary">
-                Clear Filter
+              <button @click="clearFilter" class="btn btn-primary">
+                <i class="fa fa-times"></i> Clear Filter
               </button>
             </div>
           </div>
@@ -74,10 +72,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  v-for="(value, index) in sub_categories.data"
-                  :key="index"
-                >
+                <tr v-for="(value, index) in subCategories.data" :key="value.id || index">
                   <td>
                     <img v-lazy="value.image" style="max-height: 100px" />
                   </td>
@@ -86,25 +81,16 @@
                   <td>{{ value.category?.category_name }}</td>
                   <td>{{ value.status_text }}</td>
                   <td>
-                    
-                    <a  @click.prevent="edit(value.id)"
-                      class="btn btn-primary btn-sm me-1"
-                      href="#"
-                    >
+                    <a @click.prevent="edit(value.id)" class="btn btn-primary btn-sm me-1" href="#">
                       <i class="fa fa-edit" title="Edit"></i>
                     </a>
-                    
-                    <a  @click.prevent="deleteCategory(value.id)"
-                      class="btn btn-danger btn-sm"
-                      href="#"
-                    >
+                    <a @click.prevent="deleteCategory(value.id)" class="btn btn-danger btn-sm" href="#">
                       <i class="fa fa-trash" title="Delete"></i>
                     </a>
                   </td>
                 </tr>
 
-                <!-- Empty State -->
-                <tr v-if="!sub_categories.data?.length">
+                <tr v-if="!subCategories.data?.length">
                   <td colspan="6" class="text-center text-muted py-3">
                     No sub categories found.
                   </td>
@@ -113,7 +99,7 @@
             </table>
           </div>
 
-          <!-- Loading -->
+          <!-- Loading State -->
           <div class="col-md-12 text-center" v-else>
             <img :src="url + 'images/loading.gif'" alt="Loading..." />
           </div>
@@ -121,136 +107,102 @@
       </div>
 
       <!-- Pagination -->
-      <div class="ibox animated fadeInRightBig">
-        <pagination
-          v-if="sub_categories.meta"
-          :pageData="sub_categories.meta"
-        />
-      </div>
-
-      <!-- Edit Sub Category -->
-      <div class="ibox">
-        <!-- <update-sub-category
-          :categories="categories"
-          :brands="brands"
-        /> -->
+      <div class="ibox animated fadeInRightBig" v-if="subCategories.meta">
+        <pagination :pageData="subCategories.meta" />
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { EventBus } from "../../../vue-assets";
-import Mixin from "../../../mixin";
-import Pagination from "../pagination/Pagination.vue";
-import UpdateCategory from "./EditSubCategory.vue";
-import Multiselect from "vue-multiselect";
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { EventBus } from '../../../vue-assets.js';
+import Mixin from '../../../mixin';
+import Pagination from '../pagination/Pagination.vue';
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.css';
 
-export default {
-  name: "ViewSubCategory",
+// ✅ Props with correct type
+const props = defineProps({
+  categories: {
+    type: Array,
+    default: () => [],
+  }
+});
 
-  mixins: [Mixin],
+// ✅ Reactive data
+const subCategories = ref({ data: [], meta: null });
+const isLoading = ref(false);
+const keyword = ref('');
+const category = ref(null);
+const url = base_url;
 
-  props: {
-    categories: {
-      type: Object,
-      default: () => [],
-    }
-  },
+// ✅ Methods
+const fetchSubCategories = async (page = 1) => {
+  isLoading.value = true;
+  
+  const categoryId = category.value?.id ?? '';
+  const keywordVal = keyword.value;
 
-  components: {
-    pagination: Pagination,
-    "update-sub-category": UpdateCategory,
-    Multiselect,
-  },
+  try {
+    const response = await axios.get(
+      `${base_url}admin/sub-category-list?page=${page}&keyword=${keywordVal}&category_id=${categoryId}`
+    );
+    subCategories.value = response?.data || { data: [], meta: null };
+  } catch (error) {
+    console.error('Failed to fetch sub categories:', error);
+    subCategories.value = { data: [], meta: null };
+  } finally {
+    isLoading.value = false;
+  }
+};
 
-  data() {
-    return {
-      sub_categories: {
-        data: [],
-        meta: null,
-      },
-      isLoading: false,
-      keyword: "",
-      category: null,       // ✅ null instead of fake object
-      url: base_url,
-    };
-  },
+const edit = (id) => {
+  EventBus.$emit('update-sub-category', id);
+};
 
-  mounted() {
-    const _this = this;
-
-    _this.fetchSubCategories();
-
-    EventBus.$on("sub-category-created", () => {
-      _this.fetchSubCategories();
-    });
-  },
-
-  beforeUnmount() {
-    // ✅ Clean up event listener in Vue 3
-    EventBus.$off("sub-category-created");
-  },
-
-  methods: {
-    fetchSubCategories(page = 1) {
-      this.isLoading = true;
-
-      const category_id = this.category?.id ?? "";
-
+const deleteCategory = (id) => {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  }).then((result) => {
+    if (result.isConfirmed) {
       axios
-        .get(
-          `${base_url}admin/sub-category-list?page=${page}&keyword=${this.keyword}&category_id=${category_id}`
-        )
-        .then((response) => {
-          this.sub_categories = response?.data || { data: [], meta: null };
+        .get(`${base_url}admin/sub-category/delete/${id}`)
+        .then((res) => {
+          Mixin.methods.successMessage(res.data);
+          fetchSubCategories();
         })
         .catch((error) => {
-          console.error("Failed to fetch sub categories:", error);
-          this.sub_categories = { data: [], meta: null };
-        })
-        .finally(() => {
-          this.isLoading = false;
+          console.error('Delete failed:', error);
         });
-    },
-
-    pageClicked(pageNo) {
-      this.fetchSubCategories(pageNo);
-    },
-
-    edit(id) {
-      EventBus.$emit("update-sub-category", id);
-    },
-
-    deleteCategory(id) {
-      Swal.fire({
-        title: "Are you sure?",
-        text: "You won't be able to revert this!",
-        icon: "warning",           // ✅ Vue 3 Swal uses 'icon' not 'type'
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          axios
-            .get(`${base_url}admin/sub-category/delete/${id}`)
-            .then((res) => {
-              this.successMessage(res.data);
-              this.fetchSubCategories();
-            })
-            .catch((error) => {
-              console.error("Delete failed:", error);
-            });
-        }
-      });
-    },
-
-    clearFilter() {
-      this.keyword = "";
-      this.category = null;     // ✅ reset to null
-      this.fetchSubCategories();
-    },
-  },
+    }
+  });
 };
+
+const clearFilter = () => {
+  keyword.value = '';
+  category.value = null;
+  fetchSubCategories();
+};
+
+// ✅ Event handler with reference for cleanup
+const handleSubCategoryCreated = () => {
+  fetchSubCategories();
+};
+
+// ✅ Lifecycle hooks
+onMounted(() => {
+  fetchSubCategories();
+  EventBus.$on('sub-category-created', handleSubCategoryCreated);
+});
+
+onBeforeUnmount(() => {
+  EventBus.$off('sub-category-created', handleSubCategoryCreated);
+});
 </script>

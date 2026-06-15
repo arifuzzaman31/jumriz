@@ -32,14 +32,3 @@
             </div>
 
 @endsection
-
-@push('script')
-<script type="text/javascript">
-    $(document).ready(function () {
-
-        $(".select2_demo_2").select2();
-
-    })
-</script>
- <script src="{{ asset('js/sub_sub_category.js') }}"></script>
-@endpush

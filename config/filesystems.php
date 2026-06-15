@@ -49,7 +49,7 @@ return [
 
         'images' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
+            'root' => public_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/images',
             'visibility' => 'public',
             'throw' => false,

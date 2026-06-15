@@ -116,7 +116,7 @@ return [
         'splash' => function_exists('getPwaSplashName') 
             ? array_reduce(getPwaSplashName(), function ($carry, $splash) {
                 // Assuming the helper returns an array where 'dimensions' is the key (e.g., '640x1136')
-                $carry[$splash['dimensions'] ?? $splash['size']] = '/'.$splash['icon'];
+                $carry[$splash['dimensions'] ?? $splash['size'] ?? 0] = '/'.$splash['icon'];
                 return $carry;
             }, [])
             : [

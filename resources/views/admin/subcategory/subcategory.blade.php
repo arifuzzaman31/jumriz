@@ -30,13 +30,3 @@
             </div>
 
 @endsection
-
-@push('script')
-<script type="text/javascript">
-    $(document).ready(function () {
-
-        $(".select2_demo_2").select2();
-
-    })
-</script>
-@endpush
