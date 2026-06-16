@@ -3,6 +3,12 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import VueLazyload from 'vue3-lazyload';
 
+import CreateColor from './components/admin/product/color/CreateColor.vue';
+import ViewColor from './components/admin/product/color/ViewColor.vue';
+
+import CreateSize from './components/admin/product/size/CreateSize.vue';
+import ViewSize from './components/admin/product/size/ViewSize.vue';
+
 import CreateAdmin from './components/admin/admin/CreateAdmin.vue';
 import ViewAdmin from './components/admin/admin/ViewAdmin.vue';
 
@@ -24,6 +30,12 @@ const app = createApp({});
 app.use(createPinia());
 
 // Register Global Components on the instance
+app.component('create-color', CreateColor);
+app.component('view-color', ViewColor);
+
+app.component('create-size', CreateSize);
+app.component('view-size', ViewSize);
+
 app.component('create-admin', CreateAdmin);
 app.component('view-admin', ViewAdmin);
 app.component('create-category', CreateCategory);

@@ -201,12 +201,12 @@
 
     import Mixin from  '../../../mixin';
 
-    import Pagination from  '../pagination/Pagination';
+    import Pagination from  '../pagination/Pagination.vue';
     import Multiselect from 'vue-multiselect'
 
-    import UpdateProduct from './UpdateProduct';
-    import DiscountProduct from './DiscountProduct';
-    import BulkStorage from './Bulkstock';
+    import UpdateProduct from './UpdateProduct.vue';
+    import DiscountProduct from './DiscountProduct.vue';
+    import BulkStorage from './Bulkstock.vue';
     
     export default {
 
