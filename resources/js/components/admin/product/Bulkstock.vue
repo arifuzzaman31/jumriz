@@ -55,55 +55,81 @@
 
         },
 
+        mounted() {
+            EventBus.$on('bulk-upload', this.openModal);
+            if (typeof $ !== 'undefined') {
+                $('#modal-bulk').on('hidden.bs.modal', this.resetForm);
+            }
+        },
+
+        beforeUnmount() {
+            EventBus.$off('bulk-upload', this.openModal);
+            if (typeof $ !== 'undefined') {
+                $('#modal-bulk').off('hidden.bs.modal', this.resetForm);
+            }
+        },
+
         methods : {
+            openModal() {
+                this.resetForm();
+                if (typeof $ !== 'undefined') $('#modal-bulk').modal('show');
+            },
+
+            resetForm() {
+                this.file = '';
+                this.validation_error = null;
+                this.button_name = "Upload";
+                const excelLabel = document.getElementById("excel-file");
+                if (excelLabel) {
+                  excelLabel.innerHTML = '<i class="fa fa-file-excel-o"></i> Chose Excel';
+                }
+                if (this.$refs.file) {
+                    this.$refs.file.value = null;
+                }
+            },
 
             handleFileUpload(){
                 this.file = this.$refs.file.files[0];
-                document.getElementById("excel-file").innerHTML = '<i class="fa fa-file-excel-o"></i> ' + this.file.name;
+                if (this.file) {
+                    document.getElementById("excel-file").innerHTML = '<i class="fa fa-file-excel-o"></i> ' + this.file.name;
+                }
             },
 
-            uploadExcel(){
+            uploadExcel() {
                 this.button_name = "Uploading...";
                 let formData = new FormData();
                 formData.append('file', this.file);
-                axios.post(base_url+'admin/import',
-                  formData,
-                  {
-                    headers : {
-                        'Content-Type': 'multipart/form-data'
-                    }
+
+                axios.post(base_url + 'admin/import', formData, {
+                  headers: { 'Content-Type': 'multipart/form-data' }
+                })
+                .then(response => {
+                  if (response.data.status === 'success') {
+                    this.successMessage(response.data);
+                    if (typeof $ !== 'undefined') $('#modal-bulk').modal('hide');
+                    EventBus.$emit('product-created');
+                  } else {
+                    this.successMessage(response.data);
                   }
-                ).then(response => {
-                    if(response.data.status === 'success'){
-                        this.successMessage(response.data);
-                        $('#modal-bulk').modal('hide');
-                        EventBus.$emit('product-created');
-                        this.button_name = "Upload";
-                    }
-                   else
-                    {
-                      this.successMessage(response.data);   
-                      this.button_name = "Upload";
-                    }                           
-                    this.data = new FormData();
+                  this.button_name = "Upload";
+                  this.resetForm(); // reset after success
                 })
                 .catch(err => {
-                        if (err.response.status == 422) 
-                        {
-                            this.validation_error = err.response.data.errors;
-                            this.validationError();
-                            this.file = new FormData()
-                            this.button_name = "Upload";
-                        } 
-                        else 
-                        {
-                            this.successMessage(err);
-                            // this.isloading = false;
-                            this.button_name = "Upload";
-                            this.file = new FormData();
-                        }
-                    }
-                );
+                  if (err.response && err.response.status === 422) {
+                    this.validation_error = err.response.data.errors;
+                    if (this.validationError) this.validationError(); // assuming this shows a toast
+                  } else {
+                    // Show a generic error message
+                    this.successMessage({
+                      status: 'error',
+                      message: err.response?.data?.message || 'Something went wrong!'
+                    });
+                  }
+                  this.button_name = "Upload";
+                  // Do NOT set this.file = new FormData(); it's wrong.
+                  // Instead, just reset the file input:
+                  this.resetForm();
+                });
             },
         }
 

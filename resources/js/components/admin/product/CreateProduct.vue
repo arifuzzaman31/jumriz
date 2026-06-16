@@ -175,7 +175,6 @@
                       :show-no-results="false"
                       :hide-selected="true"
                     >
-                      <!-- ✅ Vue 3 Slot Syntax -->
                       <template #tag="{ option, remove }">
                         <span class="custom__tag">
                           <span>{{ option.name }}</span>
@@ -215,7 +214,6 @@
                       :show-no-results="false"
                       :hide-selected="true"
                     >
-                      <!-- ✅ Vue 3 Slot Syntax -->
                       <template #tag="{ option, remove }">
                         <span class="custom__tag" :style="{ color: '#fff', 'background-color': option.color_code }">
                           <span>{{ option.name }}</span>
@@ -242,7 +240,7 @@
                         <span class="fileinput-exists">Change Image</span>
                         <input type="file" @change="onImageChange" />
                       </span>
-                      <img style="height: 80px" v-if="product.image" :src="product.image" />
+                      <img style="height: 80px" v-if="featureImagePreview" :src="featureImagePreview" />
                     </div>
                   </div>
                 </div>
@@ -267,7 +265,7 @@
                   </div>
                 </div>
 
-                <!-- Quill Editors (Replaced vue2-editor) -->
+                <!-- Quill Editors -->
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>Short Description</label>
@@ -306,7 +304,6 @@
         <div class="modal-content">
           <div class="modal-header">
             <h3 class="m-t-none m-b">Add Color</h3>
-            <!-- ✅ Fixed inline JS to standard bootstrap dismiss -->
             <button class="btn btn-default text-right" data-dismiss="modal">X</button>
           </div>
           <div class="modal-body">
@@ -351,7 +348,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { EventBus, base_url } from "../../../vue-assets";
 import Mixin from "../../../mixin";
 
@@ -385,6 +382,9 @@ const isSubCategoryLoading = ref(false);
 const isBrandLoading = ref(false);
 
 const formData = ref(new FormData());
+
+const featureImageFile = ref(null);          // stores the actual File
+const featureImagePreview = ref('');         // for preview (object URL)
 
 const getDefaultProduct = () => ({
   product_name: "",
@@ -420,10 +420,18 @@ const colorForm = reactive({
 // ✅ Methods
 const onImageChange = (e) => {
   const files = e.target.files || e.dataTransfer.files;
-  if (!files.length) return;
-  const reader = new FileReader();
-  reader.onload = (e) => { product.image = e.target.result; };
-  reader.readAsDataURL(files[0]);
+  if (!files.length) {
+    featureImageFile.value = null;
+    featureImagePreview.value = '';
+    return;
+  }
+  const file = files[0];
+  featureImageFile.value = file;
+  // Create a temporary URL for preview
+  if (featureImagePreview.value) {
+    URL.revokeObjectURL(featureImagePreview.value);
+  }
+  featureImagePreview.value = URL.createObjectURL(file);
 };
 
 const uploadFieldChange = (e) => {
@@ -461,8 +469,11 @@ const prepareFields = () => {
   formData.value.append("description", product.description);
   formData.value.append("short_description", product.short_description);
   formData.value.append("additional_info", product.additional_info);
-  formData.value.append("image", product.image);
   formData.value.append("status", product.status);
+
+  if (featureImageFile.value) {
+    formData.value.append('image', featureImageFile.value);
+  }
 
   if (product.product_tag.length > 0) {
     product.product_tag.forEach((tag, i) => formData.value.append(`product_tag[${i}]`, tag.keyword_name));
@@ -579,11 +590,43 @@ const resetForm = () => {
   subSubCategoriesList.value = [];
   brandsList.value = [];
   tags.value = [];
+  
+  // Clear image preview
+  if (featureImagePreview.value) {
+    URL.revokeObjectURL(featureImagePreview.value);
+    featureImagePreview.value = '';
+  }
+  featureImageFile.value = null;
+  
+  // Clear file input elements
+  const imageInput = document.querySelector('#modal-form input[type="file"]');
+  if (imageInput) imageInput.value = '';
+  const attachmentInput = document.getElementById('attachments');
+  if (attachmentInput) attachmentInput.value = '';
+};
+
+const handleCreateProduct = () => {
+  resetForm();
+  if (typeof $ !== 'undefined') $('#modal-form').modal('show');
 };
 
 // ✅ Lifecycle
 onMounted(() => {
   getColors();
+  
+  // ✅ Polished: Reset form automatically if user clicks "Close" or "X"
+  if (typeof $ !== 'undefined') {
+    $('#modal-form').on('hidden.bs.modal', resetForm);
+  }
+  EventBus.$on('create-product', handleCreateProduct);
+});
+
+onBeforeUnmount(() => {
+  // ✅ Clean up event listener to prevent memory leaks
+  if (typeof $ !== 'undefined') {
+    $('#modal-form').off('hidden.bs.modal', resetForm);
+  }
+  EventBus.$off('create-product', handleCreateProduct);
 });
 </script>
 

@@ -493,7 +493,9 @@ const prepareFields = () => {
     product.color.forEach((col, i) => formData.value.append(`product_color[${i}]`, col.id));
   }
   
-  formData.value.append('product_tag[]', product.product_tag);
+  // ❌ REMOVED: formData.value.append('product_tag[]', product.product_tag); 
+  // (It was sending [object Object] to Laravel. The forEach loop above handles it correctly).
+  
   formData.value.append("status", product.status);
 };
 
@@ -641,10 +643,13 @@ const resetForm = () => {
   brandsList.value = [];
   tags.value = [];
   multipleImage.value = [];
+  
+  // ✅ Polished: Clear the actual DOM input so it doesn't show ghost file names
+  const attachmentInput = document.getElementById("attachments");
+  if (attachmentInput) attachmentInput.value = "";
 };
 
 const deleteImage = (image_id) => {
-  // ✅ Fixed SweetAlert 2 Syntax
   Swal.fire({
     title: "Are you sure?",
     text: "The picture will be removed!",
@@ -675,7 +680,6 @@ onMounted(() => {
   getColors();
   EventBus.$on("update-product", handleUpdateProduct);
   
-  // ✅ Reset form cleanly when bootstrap modal is fully hidden
   if (typeof $ !== 'undefined') {
     $('#modal-update').on('hidden.bs.modal', resetForm);
   }
