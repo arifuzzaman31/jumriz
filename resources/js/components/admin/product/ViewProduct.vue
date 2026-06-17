@@ -244,7 +244,7 @@ const url = base_url;
 // ✅ Methods
 const getProducts = (page = 1) => {
     isLoading.value = true;
-    
+    // console.log("page no : "+page)
     // Ensure page is a valid primitive (handles event objects from Vue listeners)
     if (typeof page !== 'number' && typeof page !== 'string') {
         page = 1;
@@ -267,6 +267,7 @@ const getProducts = (page = 1) => {
         .finally(() => {
             isLoading.value = false;
         });
+    // console.log(products.value)
 };
 
 const getCategories = () => {
@@ -415,6 +416,15 @@ onMounted(() => {
     getProducts();
     getCategories();
     EventBus.$on('product-created', handleProductCreated);
+
+    // Listen for header "Create Product" button click (outside Vue component template)
+    const headerBtn = document.getElementById('header-create-product-btn');
+    if (headerBtn) {
+        headerBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            createProduct();
+        });
+    }
 });
 
 onBeforeUnmount(() => {

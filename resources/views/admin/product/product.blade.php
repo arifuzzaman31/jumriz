@@ -17,7 +17,7 @@
                 <div class="col-sm-8">
                     <div class="title-action">
                         <a data-toggle="modal" class="btn btn-primary" href="#modal-bulk">Bulk Stock in</a>
-                        <a data-toggle="modal" class="btn btn-primary" href="#modal-form">Create Product</a>
+                        <a class="btn btn-primary" id="header-create-product-btn" href="#">Create Product</a>
                     </div>
                 </div>
             </div>
@@ -26,11 +26,8 @@
                 $trial_setting = trialSetting();
             @endphp
 
-            <create-product :categories="{{ $category }}" :trial_setting='@json($trial_setting)'></create-product>
-
             <div class="wrapper wrapper-content">
                <view-product :currency="{{ $currency }}" :trial_setting='@json($trial_setting)'></view-product>
             </div>
 
 @endsection
-

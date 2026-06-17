@@ -11,5 +11,5 @@ app.use(createPinia());
 app.component('create-product', CreateProduct);
 app.component('view-product', ViewProduct);
 
-app.mount('#product-app');
+app.mount('#wrapper');
 

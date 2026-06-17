@@ -23,6 +23,9 @@ import ViewSubCategory from './components/admin/subcategory/ViewSubCategory.vue'
 
 import CreateSubSubCategory from './components/admin/subsubcategory/CreateSubSubCategory.vue';
 import ViewSubSubCategory from './components/admin/subsubcategory/ViewSubSubCategory.vue';
+
+import CreateProduct from './components/admin/product/CreateProduct.vue';
+import ViewProduct from './components/admin/product/ViewProduct.vue';
 // Initialize the Vue 3 Application instance
 const app = createApp({});
 
@@ -46,6 +49,8 @@ app.component('create-subcategory', CreateSubCategory);
 app.component('view-subcategory', ViewSubCategory);
 app.component('create-subsubcategory', CreateSubSubCategory);
 app.component('view-subsubcategory', ViewSubSubCategory);
+app.component('create-product', CreateProduct);
+app.component('view-product', ViewProduct);
 // Inject plugins using the new app.use() chain syntax
 app.use(VueLazyload, {
     loading: base_url + 'images/loading.gif',

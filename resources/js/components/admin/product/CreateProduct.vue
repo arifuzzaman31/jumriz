@@ -615,9 +615,9 @@ onMounted(() => {
   getColors();
   
   // ✅ Polished: Reset form automatically if user clicks "Close" or "X"
-  if (typeof $ !== 'undefined') {
-    $('#modal-form').on('hidden.bs.modal', resetForm);
-  }
+  // if (typeof $ !== 'undefined') {
+  //   $('#modal-form').on('hidden.bs.modal', resetForm);
+  // }
   EventBus.$on('create-product', handleCreateProduct);
 });
 
