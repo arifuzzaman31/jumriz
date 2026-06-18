@@ -333,8 +333,7 @@ const bulkUpload = () => {
 };
 
 const createProduct = () => {
-    console.log("resgf")
-    EventBus.$emit('create-product');
+    if (typeof $ !== 'undefined') $('#modal-form').modal('show');
 };
 
 const edit = (id) => {
@@ -416,15 +415,6 @@ onMounted(() => {
     getProducts();
     getCategories();
     EventBus.$on('product-created', handleProductCreated);
-
-    // Listen for header "Create Product" button click (outside Vue component template)
-    const headerBtn = document.getElementById('header-create-product-btn');
-    if (headerBtn) {
-        headerBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            createProduct();
-        });
-    }
 });
 
 onBeforeUnmount(() => {

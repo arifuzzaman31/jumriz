@@ -17,7 +17,7 @@
                 <div class="col-sm-8">
                     <div class="title-action">
                         <a data-toggle="modal" class="btn btn-primary" href="#modal-bulk">Bulk Stock in</a>
-                        <a class="btn btn-primary" id="header-create-product-btn" href="#">Create Product</a>
+                        <a class="btn btn-primary" id="header-create-product-btn" href="#modal-form" data-toggle="modal">Create Product</a>
                     </div>
                 </div>
             </div>

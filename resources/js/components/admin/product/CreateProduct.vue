@@ -606,6 +606,7 @@ const resetForm = () => {
 };
 
 const handleCreateProduct = () => {
+  console.log("hit the method");
   resetForm();
   if (typeof $ !== 'undefined') $('#modal-form').modal('show');
 };
@@ -613,12 +614,14 @@ const handleCreateProduct = () => {
 // ✅ Lifecycle
 onMounted(() => {
   getColors();
-  
-  // ✅ Polished: Reset form automatically if user clicks "Close" or "X"
-  // if (typeof $ !== 'undefined') {
-  //   $('#modal-form').on('hidden.bs.modal', resetForm);
-  // }
-  EventBus.$on('create-product', handleCreateProduct);
+
+  const modalEl = document.getElementById('modal-form');
+  if (modalEl) modalEl.addEventListener('show.bs.modal', resetForm);
+});
+
+onBeforeUnmount(() => {
+  const modalEl = document.getElementById('modal-form');
+  if (modalEl) modalEl.removeEventListener('show.bs.modal', resetForm);
 });
 
 onBeforeUnmount(() => {
