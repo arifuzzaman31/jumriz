@@ -15,6 +15,14 @@ RUN apt-get update && apt-get install -y \
     && npm install -g npm@latest \
     && rm -rf /var/lib/apt/lists/*
 
+# Set PHP runtime limits for file uploads
+RUN { \
+        echo "upload_max_filesize = 20M"; \
+        echo "post_max_size = 20M"; \
+        echo "memory_limit = 256M"; \
+        echo "max_execution_time = 120"; \
+    } > /usr/local/etc/php/conf.d/zz-custom-limits.ini
+
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql gd

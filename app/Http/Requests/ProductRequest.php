@@ -32,7 +32,7 @@ class ProductRequest extends FormRequest
                 'quantity'      => 'required|integer',
                 'buying_price'  => 'required|regex:/^[0-9]+(\.[0-9][0-9]?)?$/',
                 'selling_price' => 'required|regex:/^[0-9]+(\.[0-9][0-9]?)?$/',
-                'image'         => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
+                'image'         => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'attachments.*' => 'nullable|mimes:jpeg,png,gif,jpg,webp,bmp',
             ];
         } else {
@@ -43,7 +43,7 @@ class ProductRequest extends FormRequest
                 'quantity'      => 'required|integer',
                 'buying_price'  => 'required|regex:/^[0-9]+(\.[0-9][0-9]?)?$/',
                 'selling_price' => 'required|regex:/^[0-9]+(\.[0-9][0-9]?)?$/',
-                'image'         => 'required|image64:jpeg,png,gif,jpg,webp,bmp',
+                'image'         => 'required|image|mimes:jpeg,png,jpg,gif',
                 'attachments.*' => 'nullable|mimes:jpeg,png,gif,jpg,webp,bmp',
             ];
         }
@@ -54,7 +54,7 @@ class ProductRequest extends FormRequest
     {
         return [
             'image.required'          => 'Feature Image Is Required',
-            'image.image64'           => 'Feature Image must to be a type of jpeg,png,gif,jpg,webp,bmp',
+            // 'image.image64'           => 'Feature Image must to be a type of jpeg,png,gif,jpg,webp,bmp',
             'image.attachments.mimes' => 'Feature Image must have to be a  type of jpeg,png,gif,jpg,webp,bmp',
 
         ];

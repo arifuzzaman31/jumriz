@@ -7,7 +7,7 @@
                         <h5>Product List</h5>
                         <div class="ibox-tools">
                             <button @click.prevent="bulkUpload" class="btn btn-info btn-sm" style="margin-top: -5px; margin-right: 5px;"><i class="fa fa-upload"></i> Bulk Upload</button>
-                            <button @click.prevent="createProduct()" class="btn btn-primary btn-sm" style="margin-top: -5px;"><i class="fa fa-plus"></i> Add Product</button>
+                            <button @click.prevent="createProductModal" class="btn btn-primary btn-sm" style="margin-top: -5px;"><i class="fa fa-plus"></i> Add Product</button>
                             <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                             <a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="fa fa-wrench"></i></a>
                             <ul class="dropdown-menu dropdown-user">
@@ -204,7 +204,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { EventBus, base_url } from '../../../vue-assets';
+import { EventBus, base_url } from '../../../vue-assets'; // ✅ Import EventBus
 import Mixin from '../../../mixin';
 import Pagination from '../pagination/Pagination.vue';
 import Multiselect from 'vue-multiselect';
@@ -244,50 +244,31 @@ const url = base_url;
 // ✅ Methods
 const getProducts = (page = 1) => {
     isLoading.value = true;
-    // console.log("page no : "+page)
-    // Ensure page is a valid primitive (handles event objects from Vue listeners)
     if (typeof page !== 'number' && typeof page !== 'string') {
         page = 1;
     }
 
-    // ✅ Optional chaining prevents crash if filter is null
     const categoryId = category.value?.id ?? '';
     const subCategoryId = subCategory.value?.id ?? '';
     const subSubCategoryId = subSubCategory.value?.id ?? '';
     const brandId = brand.value?.id ?? '';
 
     axios.get(`${base_url}admin/product-list?page=${page}&keyword=${keyword.value}&category=${categoryId}&sub_category=${subCategoryId}&sub_sub_category=${subSubCategoryId}&brand=${brandId}`)
-        .then(response => {
-            products.value = response.data;
-        })
-        .catch(error => {
-            console.error('Error fetching products:', error);
-            products.value = { data: [], meta: null };
-        })
-        .finally(() => {
-            isLoading.value = false;
-        });
-    // console.log(products.value)
+        .then(response => { products.value = response.data; })
+        .catch(error => { products.value = { data: [], meta: null }; })
+        .finally(() => { isLoading.value = false; });
 };
 
 const getCategories = () => {
     axios.get(`${base_url}admin/all-categories/yes`)
-        .then(response => {
-            categories.value = response.data;
-        });
+        .then(response => { categories.value = response.data; })
+        .catch(error => { categories.value = []; });
 };
 
 const getSubCategories = () => {
-    subCategory.value = null;
-    subSubCategory.value = null;
-    brand.value = null;
-    subCategoriesList.value = [];
-    subSubCategoriesList.value = [];
-    brandsList.value = [];
-    
-    // Refresh list immediately AFTER clearing lower levels
+    subCategory.value = null; subSubCategory.value = null; brand.value = null;
+    subCategoriesList.value = []; subSubCategoriesList.value = []; brandsList.value = [];
     getProducts();
-
     if (category.value?.id) {
         isCategoryLoading.value = true;
         axios.get(`${base_url}admin/get-subcategory/${category.value.id}`)
@@ -297,14 +278,9 @@ const getSubCategories = () => {
 };
 
 const getSubSubCategories = () => {
-    subSubCategory.value = null;
-    brand.value = null;
-    subSubCategoriesList.value = [];
-    brandsList.value = [];
-    
-    // Refresh list immediately AFTER clearing lower levels
+    subSubCategory.value = null; brand.value = null;
+    subSubCategoriesList.value = []; brandsList.value = [];
     getProducts();
-
     if (subCategory.value?.id) {
         isSubCategoryLoading.value = true;
         axios.get(`${base_url}admin/get-sub-subcategory/${subCategory.value.id}`)
@@ -314,12 +290,8 @@ const getSubSubCategories = () => {
 };
 
 const getBrands = () => {
-    brand.value = null;
-    brandsList.value = [];
-    
-    // Refresh list immediately AFTER clearing lower levels
+    brand.value = null; brandsList.value = [];
     getProducts();
-
     if (subSubCategory.value?.id) {
         isBrandLoading.value = true;
         axios.get(`${base_url}admin/get-brand/${subSubCategory.value.id}`)
@@ -329,11 +301,12 @@ const getBrands = () => {
 };
 
 const bulkUpload = () => {
-    EventBus.$emit('bulk-upload');
+    EventBus.$emit('bulk-upload'); // ✅ Using EventBus consistently
 };
 
-const createProduct = () => {
-    EventBus.$emit('create-product');
+const createProductModal = () => {
+    console.log("hey")
+    EventBus.$emit('create-product'); // ✅ Using EventBus consistently
 };
 
 const edit = (id) => {
@@ -345,95 +318,70 @@ const getDiscount = (id) => {
 };
 
 const deleteProduct = (id) => {
-    // ✅ Fixed SweetAlert 2 Syntax
     Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
+        title: 'Are you sure?', text: "You won't be able to revert this!", icon: 'warning',
+        showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Yes, delete it!'
     }).then((result) => {
         if (result.isConfirmed) {
             axios.get(`${base_url}admin/product/delete/${id}`)
-                .then(res => {
-                    Mixin.methods.successMessage(res.data);
-                    getProducts();
-                });
+                .then(res => { Mixin.methods.successMessage(res.data); getProducts(); });
         }
     }); 
 };
 
 const toggleStatus = (id, status) => {
     Swal.fire({
-        title: 'Are you sure?',
-        text: status == 1 ? "The Product Will Be Deactivated" : "The Product Will Be Activated",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes!'
+        title: 'Are you sure?', text: status == 1 ? "The Product Will Be Deactivated" : "The Product Will Be Activated", icon: 'warning',
+        showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Yes!'
     }).then((result) => {
         if (result.isConfirmed) {
             axios.get(`${base_url}admin/product/deactive/${id}`)
-                .then(res => {
-                    Mixin.methods.successMessage(res.data);
-                    getProducts();
-                });
+                .then(res => { Mixin.methods.successMessage(res.data); getProducts(); });
         }
     });
 };
 
 const hotDeal = (id) => {
     axios.get(`${base_url}admin/product/hotdeal-status/${id}`)
-        .then(response => {
-            Mixin.methods.successMessage(response.data);
-        });
+        .then(response => { Mixin.methods.successMessage(response.data); });
 };
 
 const clearFilter = () => {
-    category.value = null;
-    subCategory.value = null;
-    subSubCategory.value = null;
-    brand.value = null;
-    keyword.value = '';
-    subCategoriesList.value = [];
-    subSubCategoriesList.value = [];
-    brandsList.value = [];
+    category.value = null; subCategory.value = null; subSubCategory.value = null; brand.value = null; keyword.value = '';
+    subCategoriesList.value = []; subSubCategoriesList.value = []; brandsList.value = [];
     getProducts();
 };
 
-// ✅ Event Handler Wrapper
 const handleProductCreated = () => {
     getProducts();
-    // ✅ REMOVED location.reload() - it breaks Vue SPA state!
 };
 
-// ✅ Lifecycle Hooks
+// ✅ CLEAN Lifecycle Hooks
 onMounted(() => {
     getProducts();
     getCategories();
-
-    // ✅ Attach Vue listener to the Blade header button
+    
+    // Listen for Blade header button click
     const headerBtn = document.getElementById('header-create-product-btn');
     if (headerBtn) {
         headerBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            createProduct(); // Calls the same method as your internal "Add Product" button
+            createProductModal();
         });
     }
 
+    // Listen for product updates
     EventBus.$on('product-created', handleProductCreated);
 });
 
 onBeforeUnmount(() => {
-    // ✅ Clean up the header button listener
+    // Clean up Blade header button click
     const headerBtn = document.getElementById('header-create-product-btn');
     if (headerBtn) {
         headerBtn.removeEventListener('click', () => {});
     }
 
+    // Clean up EventBus
     EventBus.$off('product-created', handleProductCreated);
 });
 </script>

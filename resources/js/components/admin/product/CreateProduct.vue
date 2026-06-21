@@ -369,14 +369,29 @@ const getJQuery = () => window.jQuery || window.$;
 
 const showBootstrapModal = (selector) => {
   const jq = getJQuery();
-  if (!jq || typeof jq(selector).modal !== 'function') return;
-  jq(selector).modal('show');
+  if (!jq) {
+    console.error('jQuery not available');
+    return;
+  }
+  const $el = jq(selector);
+  if (!$el.length) {
+    console.error('Modal element not found:', selector);
+    return;
+  }
+  if (typeof $el.modal === 'function') {
+    $el.modal('show');
+  } else {
+    console.error('Bootstrap modal plugin not available on jQuery');
+  }
 };
 
 const hideBootstrapModal = (selector) => {
   const jq = getJQuery();
-  if (!jq || typeof jq(selector).modal !== 'function') return;
-  jq(selector).modal('hide');
+  if (!jq) return;
+  const $el = jq(selector);
+  if ($el.length && typeof $el.modal === 'function') {
+    $el.modal('hide');
+  }
 };
 
 // ✅ State
@@ -431,7 +446,6 @@ const colorForm = reactive({
   color_code: "",
 });
 
-// ✅ Methods
 const onImageChange = (e) => {
   const files = e.target.files || e.dataTransfer.files;
   if (!files.length) {
@@ -440,8 +454,11 @@ const onImageChange = (e) => {
     return;
   }
   const file = files[0];
-  featureImageFile.value = file;
-  // Create a temporary URL for preview
+  
+  // ✅ Store the ACTUAL file object (not base64)
+  featureImageFile.value = file; 
+
+  // Generate a temporary URL just for the preview on the screen
   if (featureImagePreview.value) {
     URL.revokeObjectURL(featureImagePreview.value);
   }
@@ -537,9 +554,10 @@ const save = async () => {
 const getSubCategories = () => {
   product.sub_category = ""; product.sub_sub_category = ""; product.brand = ""; product.size = [];
   subCategoriesList.value = []; subSubCategoriesList.value = []; brandsList.value = []; sizes.value = [];
+  // console.log(product.category)
   if (product.category?.id) {
     isCategoryLoading.value = true;
-    axios.get(`${base_url}admin/get-subcategory/${product.category.id}`).then(res => { subCategoriesList.value = res.data; isCategoryLoading.value = false; });
+    axios.get(`${base_url}admin/get-subcategory/${product.category.id}`).then(res => { subCategoriesList.value = res.data.data; isCategoryLoading.value = false; });
     axios.get(`${base_url}admin/get-sizes/${product.category.id}`).then(res => { sizes.value = res.data; });
   }
 };
@@ -619,17 +637,22 @@ const resetForm = () => {
   if (attachmentInput) attachmentInput.value = '';
 };
 
-const handleCreateProduct = () => {
+const handleCreateProduct = (payload) => {
+  console.log('handleCreateProduct called - event received', { payload });
   resetForm();
-  nextTick(() => showBootstrapModal('#modal-form'));
+  nextTick(() => {
+    showBootstrapModal('#modal-form');
+  });
 };
 
 // ✅ Lifecycle Hooks
 onMounted(() => {
+  console.log('CreateProduct mounted - registering create-product listener');
   getColors();
 
   // Listen for the event from ViewProduct
   EventBus.$on('create-product', handleCreateProduct);
+  console.log('create-product listener registered');
 
   // Reset form cleanly when bootstrap modal is fully hidden
   const jq = getJQuery();

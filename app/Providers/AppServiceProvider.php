@@ -24,10 +24,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Validator::extend('image64', function ($attribute, $value, $parameters, $validator) {
-            $type = explode('/', explode(':', substr($value, 0, strpos($value, ';')))[1])[1];
-            if (in_array($type, $parameters)) {
-                return true;
+            // Check if it matches the standard data URI format: data:image/[type];base64,...
+            if (preg_match('/^data:(image\/[a-z]+);base64,/', $value, $matches)) {
+                // $matches[1] will be "image/png", "image/jpeg", etc.
+                $type = explode('/', $matches[1])[1] ?? '';
+                return in_array($type, $parameters);
             }
+            
             return false;
         });
 

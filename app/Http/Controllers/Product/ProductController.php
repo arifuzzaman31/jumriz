@@ -196,21 +196,14 @@ class ProductController extends Controller
 
             }
 
-            $imageData = $request->get('image');
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-            if ($imageData) {
-
-                $fileName = uniqid() . '.' . explode('/', explode(':', substr($imageData, 0, strpos($imageData, ';')))[1])[1];
-
-                Image::make($request->get('image'))
-                // ->resizeCanvas(600, 600, 'center', false, '#ffffff')
-                    ->save('images/product/feature/' . $fileName);
-
-                // this line for adding watermark
-                // ->insert('images/logo/5eb0f9ea62736.png', 'bottom-right', 5, 5)
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/product/feature'), $fileName);
 
                 $product->product_image = $fileName;
-
             }
 
             $product->save();
@@ -251,20 +244,17 @@ class ProductController extends Controller
             }
 
             if ($request->file('attachments')) {
-
-                foreach ($request->file('attachments') as $key => $file) {
+                foreach ($request->file('attachments') as $file) {
                     $name = time() . '_' . rand(1000, 4000) . '.' . $file->getClientOriginalExtension();
 
-                    Image::make($file)
-                    // ->resizeCanvas(600, 600, 'center', false, '#ffffff')
-                        ->save('images/product/image/' . $name);
+                    // Move original file directly to the folder (no resizing)
+                    $file->move(public_path('images/product/image'), $name);
 
-                    $product_image             = new ProductImage;
+                    $product_image = new ProductImage;
                     $product_image->image_name = $name;
                     $product_image->product_id = $product->id;
                     $product_image->save();
                 }
-
             }
 
             DB::commit();
