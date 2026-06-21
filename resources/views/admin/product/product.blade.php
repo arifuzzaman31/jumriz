@@ -2,32 +2,38 @@
 @section('title','Product')
 @section('content')
 
-           <div class="row wrapper border-bottom white-bg page-heading">
-                <div class="col-sm-4">
-                    <h2>@yield('title')</h2>
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            <a href="{{ url('/admin') }}">Dashboard</a>
-                        </li>
-                        <li class="breadcrumb-item active">
-                            <strong>@yield('title')</strong>
-                        </li>
-                    </ol>
-                </div>
-                <div class="col-sm-8">
-                    <div class="title-action">
-                        <a data-toggle="modal" class="btn btn-primary" href="#modal-bulk">Bulk Stock in</a>
-                        <a class="btn btn-primary" id="header-create-product-btn" href="#modal-form" data-toggle="modal">Create Product</a>
-                    </div>
-                </div>
+    <div class="row wrapper border-bottom white-bg page-heading">
+        <div class="col-sm-4">
+            <h2>@yield('title')</h2>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ url('/admin') }}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active">
+                    <strong>@yield('title')</strong>
+                </li>
+            </ol>
+        </div>
+        <div class="col-sm-8">
+            <div class="title-action">
+                <a data-toggle="modal" class="btn btn-primary" href="#modal-bulk">Bulk Stock in</a>
+                
+                <!-- ✅ REMOVED data-toggle="modal" and href="#modal-form" -->
+                <!-- ✅ Added an ID so Vue can find it -->
+                <a class="btn btn-primary" id="header-create-product-btn" href="javascript:void(0)">
+                    Create Product
+                </a>
             </div>
-            @php 
-                $currency = getCurrentCurrency();
-                $trial_setting = trialSetting();
-            @endphp
+        </div>
+    </div>
 
-            <div class="wrapper wrapper-content">
-               <view-product :currency="{{ $currency }}" :trial_setting='@json($trial_setting)'></view-product>
-            </div>
+    @php 
+        $currency = getCurrentCurrency();
+        $trial_setting = trialSetting();
+    @endphp
+
+    <div class="wrapper wrapper-content">
+       <view-product :currency="{{ $currency }}" :trial_setting='@json($trial_setting)'></view-product>
+    </div>
 
 @endsection

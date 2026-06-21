@@ -43,6 +43,25 @@ class SubCategoryController extends Controller
         $subCategory = $subCategory->paginate(10);
         return SubCategoryResource::collection($subCategory);
     }
+    
+    public function getSubCategory(Request $request, $category_id): AnonymousResourceCollection
+    {
+        $subCategory = SubCategory::with('category:id,category_name')->orderBy('updated_at', 'desc');
+
+        if ($request->keyword != '') {
+            $subCategory->where(function($query) use ($request) {
+                $query->where('sub_category_name', 'LIKE', '%' . $request->keyword . '%')
+                    ->orWhere('sub_category_native_name', 'LIKE', '%' . $request->keyword . '%');
+            });
+        }
+
+        if ($category_id != '') {
+            $subCategory->where('category_id', $request->category_id);
+        }
+
+        $subCategory = $subCategory->paginate(10);
+        return SubCategoryResource::collection($subCategory);
+    }
 
     /**
      * Store a newly created resource in storage.

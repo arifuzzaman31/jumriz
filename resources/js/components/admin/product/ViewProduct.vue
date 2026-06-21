@@ -7,7 +7,7 @@
                         <h5>Product List</h5>
                         <div class="ibox-tools">
                             <button @click.prevent="bulkUpload" class="btn btn-info btn-sm" style="margin-top: -5px; margin-right: 5px;"><i class="fa fa-upload"></i> Bulk Upload</button>
-                            <button @click.prevent="createProduct" class="btn btn-primary btn-sm" style="margin-top: -5px;"><i class="fa fa-plus"></i> Add Product</button>
+                            <button @click.prevent="createProduct()" class="btn btn-primary btn-sm" style="margin-top: -5px;"><i class="fa fa-plus"></i> Add Product</button>
                             <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                             <a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="fa fa-wrench"></i></a>
                             <ul class="dropdown-menu dropdown-user">
@@ -333,7 +333,7 @@ const bulkUpload = () => {
 };
 
 const createProduct = () => {
-    if (typeof $ !== 'undefined') $('#modal-form').modal('show');
+    EventBus.$emit('create-product');
 };
 
 const edit = (id) => {
@@ -414,10 +414,26 @@ const handleProductCreated = () => {
 onMounted(() => {
     getProducts();
     getCategories();
+
+    // ✅ Attach Vue listener to the Blade header button
+    const headerBtn = document.getElementById('header-create-product-btn');
+    if (headerBtn) {
+        headerBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            createProduct(); // Calls the same method as your internal "Add Product" button
+        });
+    }
+
     EventBus.$on('product-created', handleProductCreated);
 });
 
 onBeforeUnmount(() => {
+    // ✅ Clean up the header button listener
+    const headerBtn = document.getElementById('header-create-product-btn');
+    if (headerBtn) {
+        headerBtn.removeEventListener('click', () => {});
+    }
+
     EventBus.$off('product-created', handleProductCreated);
 });
 </script>

@@ -348,7 +348,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { EventBus, base_url } from "../../../vue-assets";
 import Mixin from "../../../mixin";
 
@@ -364,6 +364,20 @@ const props = defineProps({
   categories: { type: Array, default: () => [] },
   trial_setting: { type: Object, default: () => ({}) }
 });
+
+const getJQuery = () => window.jQuery || window.$;
+
+const showBootstrapModal = (selector) => {
+  const jq = getJQuery();
+  if (!jq || typeof jq(selector).modal !== 'function') return;
+  jq(selector).modal('show');
+};
+
+const hideBootstrapModal = (selector) => {
+  const jq = getJQuery();
+  if (!jq || typeof jq(selector).modal !== 'function') return;
+  jq(selector).modal('hide');
+};
 
 // ✅ State
 const isSaving = ref(false);
@@ -498,7 +512,7 @@ const save = async () => {
     });
 
     if (response.data.status === "success") {
-      if (typeof $ !== 'undefined') $('#modal-form').modal("hide");
+      hideBootstrapModal('#modal-form');
       resetForm();
       Mixin.methods.successMessage(response.data);
       EventBus.$emit("product-created");
@@ -557,7 +571,7 @@ const addTag = (newTag) => {
   product.product_tag.push(tag);
 };
 
-const colorModal = () => { if (typeof $ !== 'undefined') $("#modal-color").modal("show"); };
+const colorModal = () => { showBootstrapModal('#modal-color'); };
 
 const addColor = async () => {
   const code = colorForm.color_code.trim();
@@ -567,7 +581,7 @@ const addColor = async () => {
   }
   try {
     const response = await axios.post(`${base_url}admin/product-color`, colorForm);
-    if (typeof $ !== 'undefined') $("#modal-color").modal("hide");
+    hideBootstrapModal('#modal-color');
     colors.value.push(response.data);
     product.color.push(response.data);
     resetColorForm();
@@ -606,31 +620,46 @@ const resetForm = () => {
 };
 
 const handleCreateProduct = () => {
-  console.log("hit the method");
   resetForm();
-  if (typeof $ !== 'undefined') $('#modal-form').modal('show');
+  nextTick(() => showBootstrapModal('#modal-form'));
 };
 
-// ✅ Lifecycle
+// ✅ Lifecycle Hooks
 onMounted(() => {
   getColors();
 
-  const modalEl = document.getElementById('modal-form');
-  if (modalEl) modalEl.addEventListener('show.bs.modal', resetForm);
-});
+  // Listen for the event from ViewProduct
+  EventBus.$on('create-product', handleCreateProduct);
 
-onBeforeUnmount(() => {
-  const modalEl = document.getElementById('modal-form');
-  if (modalEl) modalEl.removeEventListener('show.bs.modal', resetForm);
-});
-
-onBeforeUnmount(() => {
-  // ✅ Clean up event listener to prevent memory leaks
-  if (typeof $ !== 'undefined') {
-    $('#modal-form').off('hidden.bs.modal', resetForm);
+  // Reset form cleanly when bootstrap modal is fully hidden
+  const jq = getJQuery();
+  if (jq) {
+    jq('#modal-form').on('hidden.bs.modal', resetForm);
   }
-  EventBus.$off('create-product', handleCreateProduct);
 });
+
+onBeforeUnmount(() => {
+  EventBus.$off('create-product', handleCreateProduct);
+
+  // Clean up jQuery listener to prevent memory leaks
+  const jq = getJQuery();
+  if (jq) {
+    jq('#modal-form').off('hidden.bs.modal', resetForm);
+  }
+});
+
+// onBeforeUnmount(() => {
+//   const modalEl = document.getElementById('modal-form');
+//   if (modalEl) modalEl.removeEventListener('show.bs.modal', resetForm);
+// });
+
+// onBeforeUnmount(() => {
+//   // ✅ Clean up event listener to prevent memory leaks
+//   if (typeof $ !== 'undefined') {
+//     $('#modal-form').off('hidden.bs.modal', resetForm);
+//   }
+//   EventBus.$off('create-product', handleCreateProduct);
+// });
 </script>
 
 <style scoped>
