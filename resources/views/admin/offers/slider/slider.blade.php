@@ -28,7 +28,3 @@
 </div>
 
 @endsection
-
-@push('script')
- <script src="{{ asset('js/campaign.js') }}"></script>
-@endpush

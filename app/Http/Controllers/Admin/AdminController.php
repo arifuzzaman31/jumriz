@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting\ShippingArea;
-use Auth;
-use Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
-use Image;
+use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
@@ -49,7 +49,7 @@ class AdminController extends Controller
             'role_id'               => 'required',
             'password'              => 'required|confirmed',
             'password_confirmation' => 'required',
-            'image'                 => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
+            'image'                 => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
         ]);
 
         try
@@ -63,22 +63,21 @@ class AdminController extends Controller
             $admin->status        = $request->status;
             $admin->password      = Hash::make($request->password);
 
-            $imageData = $request->get('image');
-
-            if ($imageData) {
-
-                $fileName = 'avatar' . uniqid() . '.' . explode('/', explode(':', substr($imageData, 0, strpos($imageData, ';')))[1])[1];
-                Image::make($request->get('image'))->save('images/admin/' . $fileName);
+            if ($request->hasFile('image')) {
+            
+                $file = $request->file('image');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/admin'), $fileName);
 
                 $admin->avatar = $fileName;
-
             }
 
             $admin->save();
 
             return response()->json(['status' => 'success', 'message' => 'Admin Created']);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Something went Wrong!' . $e->errorInfo[2]]);
+            return response()->json(['status' => 'error', 'message' => 'Something went Wrong!' . $e->getMessage()]);
         }
 
     }
@@ -119,27 +118,36 @@ class AdminController extends Controller
             'name'    => 'required',
             'email'   => 'required',
             'role_id' => 'required',
-            'avatar'  => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
+            'avatar'  => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
         ]);
-
-        $update                = Admin::find($id);
-        $update->name          = $request->name;
-        $update->email         = $request->email;
-        $update->admin_area_id = $request->area;
-        $update->role_id       = $request->role_id;
-        $update->status        = $request->status;
-
-        $imageData = $request->get('avatar');
-        if ($imageData) {
-            if (!empty($update->avatar) && file_exists('images/admin/' . $update->avatar)) {
-                unlink('images/admin/' . $update->avatar);
+        try {
+            //code...
+            $update                = Admin::find($id);
+            $update->name          = $request->name;
+            $update->email         = $request->email;
+            $update->admin_area_id = $request->area ?? 0;
+            $update->role_id       = $request->role_id;
+            $update->status        = $request->status;
+    
+            if ($request->hasFile('avatar')) {
+                if (!empty($update->avatar) && file_exists('images/admin/' . $update->avatar)) {
+                    unlink('images/admin/' . $update->avatar);
+                }
+                $file = $request->file('avatar');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+    
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/admin'), $fileName);
+    
+                 $update->avatar = $fileName;
             }
-            $fileName = 'avatar' . uniqid() . '.' . explode('/', explode(':', substr($imageData, 0, strpos($imageData, ';')))[1])[1];
-            Image::make($request->get('avatar'))->save('images/admin/' . $fileName);
-            $update->avatar = $fileName;
+            $update->update();
+            return response()->json(['status' => 'success', 'message' => 'Admin Updated Successfull']);
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Something went Wrong!' . $th->getMessage()]);
+            throw $th;
         }
-        $update->update();
-        return response()->json(['status' => 'success', 'message' => 'Admin Updated Successfull']);
     }
 
     public function destroy($id)
@@ -152,7 +160,7 @@ class AdminController extends Controller
             $admin->delete();
             return response()->json(['status' => 'success', 'message' => 'Admin Deleted Successfull']);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->errorInfo[2]]);
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
         }
     }
 

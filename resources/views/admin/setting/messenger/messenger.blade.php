@@ -21,7 +21,3 @@
     </div>
 
 @endsection
-
-@push('script')
- <script src="{{ asset('js/messenger.js') }}"></script>
-@endpush

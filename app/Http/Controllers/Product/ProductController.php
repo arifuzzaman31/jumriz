@@ -18,10 +18,11 @@ use App\Models\Size;
 use App\Models\SubCategory;
 use App\Models\SubCategoryBrand;
 use App\Models\SubSubCategory;
-use Auth;
-use DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Image;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -107,18 +108,18 @@ class ProductController extends Controller
         ])
             ->orderBy('updated_at', 'desc');
 
-        if ($request->category != 'undefined') {
+        if ($request->category && $request->category != 'undefined') {
             $product->where('category_id', '=', $request->category);
         }
-        if ($request->sub_category != 'undefined') {
+        if ($request->sub_category && $request->sub_category != 'undefined') {
             $product->where('sub_category_id', '=', $request->sub_category);
         }
 
-        if ($request->sub_sub_category != 'undefined') {
+        if ($request->sub_sub_category && $request->sub_sub_category != 'undefined') {
             $product->where('sub_sub_category_id', '=', $request->sub_sub_category);
         }
 
-        if ($request->brand != 'undefined') {
+        if ($request->brand && $request->brand != 'undefined') {
             $product->where('brand_id', '=', $request->brand);
         }
 
@@ -139,7 +140,7 @@ class ProductController extends Controller
             });
         }
         $product = $product->paginate(12);
-
+        // Log::info($product);
         return ProductResource::collection($product);
 
     }

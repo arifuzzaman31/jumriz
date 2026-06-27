@@ -15,7 +15,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:admin', 'permission']]
     Route::controller(CampaignController::class)->group(function () {
         Route::get('offer-list', 'offerList');
         Route::get('offer/{id}/delete', 'destroy');
-        Route::post('offer/{id}/update', 'update');
+        Route::put('offer/{id}/update', 'update');
         Route::get('offer/product-list/search', 'productList');
         Route::get('offer/status/{id}', 'offerStatus');
     });

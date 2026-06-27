@@ -85,7 +85,7 @@ class TrialController extends Controller
             $result->update();
             $message = ['status' => 'success', 'message' => 'Trial Updated Successfully'];
         } catch (Exception $e) {
-            $message = ['status' => 'error', 'message' => $e->errorInfo[2]];
+            $message = ['status' => 'error', 'message' => $e->getMessage()];
         }
         
         return $message;

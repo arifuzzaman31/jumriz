@@ -81,7 +81,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { EventBus, base_url } from '../../../../vue-assets';
-import Mixin from '../../../../mixin';
+import { useMixin } from '../../../../mixin';
 
 // ✅ Reactive State
 const form = reactive({

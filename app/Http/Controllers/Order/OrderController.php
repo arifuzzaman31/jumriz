@@ -411,7 +411,7 @@ class OrderController extends Controller
             $shop_info = ShopSetting::orderBy('id', 'desc')->first();
             $subject   = $request->subject;
             $text_body = $request->text_body;
-            $email     = $shop_info->email;
+            $email     = $shop_info->email ?? 'noreply@example.com';
             $name      = $shop_info->shop_name;
             $subject   = 'Order Invoice No-' . $request->order_id . ' from ' . $name;
 

@@ -44,7 +44,7 @@
 
 <script>
 import { EventBus } from "../../../vue-assets";
-import Mixin from "../../../mixin";
+import { useMixin } from "../../../mixin";
 import SingleProduct from "../product/SingleProduct";
 
 export default {

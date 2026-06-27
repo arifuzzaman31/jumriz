@@ -39,7 +39,7 @@ class MessangerController extends Controller
 
 			$message = ['status' => 'success', 'message' => 'Facebook Page Id Updated Successfully!'];
     	} catch (Exception $e) {
-    		$message = ['status' => 'error', 'message' => $e->errorInfo[2]];
+    		$message = ['status' => 'error', 'message' => $e->getMessage()];
     	}
     	return $message;
     }
@@ -75,7 +75,7 @@ class MessangerController extends Controller
 			cache()->forget('google-setting');
 			$message = ['status' => 'success', 'message' => 'Google Analytics ID updated!'];
     	} catch (Exception $e) {
-    		$message = ['status' => 'error', 'message' => $e->errorInfo[2]];
+    		$message = ['status' => 'error', 'message' => $e->getMessage()];
     	}
     	return $message;
     }

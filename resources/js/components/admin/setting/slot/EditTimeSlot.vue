@@ -1,5 +1,5 @@
 <template>
-  <div id="UpdateTimeSlot" class="modal fade" aria-hidden="true">
+  <div ref="modalRef" id="UpdateTimeSlot" class="modal fade" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header text-right">
@@ -9,7 +9,7 @@
           <div class="row">
             <div class="col-sm-8 mr-auto ml-auto">
               <h3 class="m-t-none m-b">Update Slot</h3>
-              <form @submit.prevent="save()" role="form">
+              <form @submit.prevent="save" role="form">
                 <div class="form-group">
                   <label>Slot Name *</label>
                   <input
@@ -46,21 +46,26 @@
                   <button
                     class="btn btn-lg btn-primary float-right"
                     type="submit"
+                    :disabled="isSubmitting"
                   >
-                    <strong>{{ button_name }}</strong>
+                    <strong>{{ buttonName }}</strong>
                   </button>
                 </div>
               </form>
             </div>
             <div
+              v-if="validationError"
               class="col-md-8 mr-auto ml-auto"
-              v-if="validation_error"
               style="margin-top: 20px"
             >
               <div class="form-group">
                 <div>
                   <ul>
-                    <li class="text-danger" v-for="error in validation_error">
+                    <li
+                      v-for="(error, index) in validationError"
+                      :key="index"
+                      class="text-danger"
+                    >
                       {{ error[0] }}
                     </li>
                   </ul>
@@ -74,86 +79,87 @@
   </div>
 </template>
 
+<script setup>
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { emitter } from '../../../../vue-assets'
+import { useMixin } from '../../../../mixin'
 
-<script>
-import { EventBus } from "../../../../vue-assets";
+const { successMessage, validationError: showValidationError } = useMixin()
 
-import Mixin from "../../../../mixin";
+const modalRef = ref(null)
+const isSubmitting = ref(false)
+const buttonName = ref('Save')
+const validationError = ref(null)
 
-export default {
-  mixins: [Mixin],
+const timeSlot = reactive({
+  id: '',
+  slot_name: '',
+  expired_at: '',
+  status: '',
+})
 
-  data() {
-    return {
-      timeSlot: {
-        id: "",
-        slot_name: "",
-        expired_at: "",
-        status: "",
-      },
+const openModal = (slotData) => {
+  Object.assign(timeSlot, slotData)
+  // Option 1: jQuery (Bootstrap 3/4)
+  $(modalRef.value).modal('show')
+  
+  // Option 2: Bootstrap 5 (uncomment if using BS5)
+  // new bootstrap.Modal(modalRef.value).show()
+}
 
-      button_name: "Save",
-      validation_error: null,
-    };
-  },
+const closeModal = () => {
+  // Option 1: jQuery (Bootstrap 3/4)
+  $(modalRef.value).modal('hide')
+  
+  // Option 2: Bootstrap 5 (uncomment if using BS5)
+  // const modal = bootstrap.Modal.getInstance(modalRef.value)
+  // modal?.hide()
+}
 
-  mounted() {
-    var _this = this;
-    EventBus.$on("edit-slot", function (timeSlot) {
-      _this.timeSlot = timeSlot;
-      $("#UpdateTimeSlot").modal("show");
-    });
-  },
+const resetForm = () => {
+  timeSlot.id = ''
+  timeSlot.slot_name = ''
+  timeSlot.expired_at = ''
+  timeSlot.status = ''
+  validationError.value = null
+}
 
-  methods: {
-    save() {
-      this.button_name = "Saving...";
+const save = async () => {
+  buttonName.value = 'Saving...'
+  isSubmitting.value = true
 
-      axios
-        .put(
-          base_url + "admin/setting/time-slot/" + this.timeSlot.id,
-          this.timeSlot
-        )
-        .then((response) => {
-          if (response.data.status === "success") {
-            $("#UpdateTimeSlot").modal("hide");
+  try {
+    const response = await axios.put(
+      `${base_url}admin/setting/time-slot/${timeSlot.id}`,
+      timeSlot
+    )
 
-            this.resetForm();
-            this.successMessage(response.data);
-            EventBus.$emit("slot-created");
+    if (response.data.status === 'success') {
+      closeModal()
+      resetForm()
+      successMessage(response.data)
+      emitter.emit('slot-created')
+    } else {
+      successMessage(response.data)
+    }
+  } catch (err) {
+    if (err.response?.status === 422) {
+      validationError.value = err.response.data.errors
+      showValidationError()
+    } else {
+      successMessage(err)
+    }
+  } finally {
+    buttonName.value = 'Save'
+    isSubmitting.value = false
+  }
+}
 
-            this.button_name = "Save";
-          } else {
-            this.successMessage(response.data);
-            this.button_name = "Save";
-          }
-        })
-        .catch((err) => {
-          if (err.response.status == 422) {
-            this.validation_error = err.response.data.errors;
+onMounted(() => {
+  emitter.on('edit-slot', openModal)
+})
 
-            this.validationError();
-
-            this.button_name = "Save";
-          } else {
-            this.successMessage(err);
-
-            this.isloading = false;
-
-            this.button_name = "Save";
-          }
-        });
-    },
-
-    resetForm() {
-      this.timeSlot = {
-        slot_name: "",
-        expired_at: "",
-        status: "",
-      };
-
-      this.validation_error = null;
-    },
-  },
-};
+onUnmounted(() => {
+  emitter.off('edit-slot', openModal)
+})
 </script>

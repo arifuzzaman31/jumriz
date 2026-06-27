@@ -102,7 +102,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { EventBus, base_url } from '../../../../vue-assets';
-import Mixin from '../../../../mixin';
+import { useMixin } from '../../../../mixin';
 import Pagination from '../../pagination/Pagination.vue';
 import UpdateSize from './EditSize.vue';
 

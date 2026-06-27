@@ -26,7 +26,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth:admin', 'permission']]
     Route::get('admin/delete/{id}', [AdminController::class, 'destroy']);
     Route::get('admin/{id}/edit', [AdminController::class, 'edit']);
     Route::get('admin/status/{id}', [AdminController::class, 'changeStatus']);
-    Route::post('admin/update/{id}', [AdminController::class, 'update']);
+    Route::put('admin/update/{id}', [AdminController::class, 'update']);
     Route::get('admin-list', [AdminController::class, 'adminList']);
     Route::get('all-area', [AdminController::class, 'areaList']);
 

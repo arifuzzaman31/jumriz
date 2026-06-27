@@ -39,7 +39,7 @@ class PageSettingController extends Controller
     		
     	} catch (Exception $e) {
     		DB::rollback();
-    		$message = ['status' => 'error', 'message' => $e->errorInfo[2]];
+    		$message = ['status' => 'error', 'message' => $e->getMessage()];
     	}
     	
     	return $message;
@@ -62,7 +62,7 @@ class PageSettingController extends Controller
             $message = ['status' => 'success', 'message' => 'Page Updated Successfully'];
         } catch (Exception $e) {
             DB::rollback();
-            $message = ['status' => 'error', 'message' => $e->errorInfo[2]];
+            $message = ['status' => 'error', 'message' => $e->getMessage()];
         }
         
         return $message;

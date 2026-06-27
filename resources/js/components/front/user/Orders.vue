@@ -63,7 +63,7 @@
 <script>
 	import {EventBus} from  '../../../vue-assets';
 	import Pagination from  '../pagination/paginate.vue';
-	import Mixin from  '../../../mixin'
+	import { useMixin } from  '../../../mixin'
 	import OrderDetails from  './OrderDetails'
 	import Payment from  './Payment.vue'
 

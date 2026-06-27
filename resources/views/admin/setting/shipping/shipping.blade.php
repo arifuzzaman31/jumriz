@@ -30,7 +30,3 @@
 
 @endsection
 
-@push('script')
- <script src="{{ asset('js/shipping.js') }}"></script>
-@endpush
-

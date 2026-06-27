@@ -74,14 +74,11 @@
 	
 	import { EventBus } from  '../../../vue-assets';
 
-	import Mixin from  '../../../mixin';
+	import { useMixin } from  '../../../mixin';
+	const { successMessage, validationError: showValidationError } = useMixin()
 
 	export default {
-
-		mixins : [Mixin],
-
 		data(){
-
 			return {
 
 				brand : {

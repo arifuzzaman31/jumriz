@@ -58,7 +58,7 @@
 </template>
 <script>
 	import { EventBus } from  '../../../../vue-assets';
-    import Mixin from  '../../../../mixin';
+    import { useMixin } from  '../../../../mixin';
 
     import Pagination from  '../../pagination/Pagination';
     import Multiselect from 'vue-multiselect'

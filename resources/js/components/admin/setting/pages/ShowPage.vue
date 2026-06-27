@@ -33,7 +33,7 @@
 </template>
 <script>
 	import { EventBus } from  '../../../../vue-assets';
-	import Mixin from  '../../../../mixin';
+	import { useMixin } from  '../../../../mixin';
 
 	export default{
 		name: 'ShowPage',

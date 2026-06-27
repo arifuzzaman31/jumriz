@@ -1,237 +1,157 @@
 <template>
-	<div id="update-coupon" class="modal fade" >
-		<div class="modal-dialog modal-lg">
-			<div class="modal-content">
-				<div class="modal-header ">
-					<h3 class="m-t-none m-b">Update Coupon</h3>
-					<button class="btn btn-default text-right" data-dismiss="modal">X</button>
-				</div>
-				<div class="modal-body">
-					<form @submit.prevent="update()">
-						<div class="row">
-							<div class="col-md-6">
-								<div class="form-group">
-									<label>Coupon Code*</label> 
-									<input type="text" v-model="form.coupon_code"  class="form-control" placeholder="Coupon Code">
-								</div>
-							</div>						
-							<div class="col-md-6">
-								<div class="form-group">
-									<label>Amount Type*</label> 
-									<select class="form-control" v-model="form.amount_type">
-										<option value="">Select Type</option>
-										<option value="1">Amount</option>
-										<option value="2">%</option>
-									</select>
-								</div>
-							</div>	
-							<div class="col-md-6">
-								<div class="form-group">
-									<label>Amount*</label> 
-									<input type="text" v-model="form.amount" class="form-control" placeholder="Coupon Amount">
-								</div>
-							</div>	
-							<div class="col-md-6">
-								<div class="form-group">
-									<label>Max Amount*</label> 
-									<input type="text" v-model="form.max_amount_limit" class="form-control" placeholder="Maximum Amount">
-								</div>
-							</div>	
-							<div class="col-md-6">
-								<div class="form-group">
-									<label>Valid Date*</label> 
-									<v2-datepicker lang="en" style="padding-top:3px" format="yyyy-MM-DD" v-model="form.valid_date" :picker-options="pickerOptions2"></v2-datepicker>
-								</div>
-							</div>	
+    <div id="update-coupon" class="modal fade">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="m-t-none m-b">Update Coupon</h3>
+                    <button type="button" class="btn btn-default text-right" data-dismiss="modal">X</button>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="update">
+                        <!-- Validation Errors -->
+                        <div class="row" v-if="validationError">
+                            <div class="col-md-12" style="margin-top: 20px">
+                                <div class="form-group">
+                                    <ul>
+                                        <li class="text-danger" v-for="(error, index) in validationError" :key="index">
+                                            {{ error[0] }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
 
-							<!-- <div class="col-md-6">
-								<div class="form-group">
-									<label>Slider Status*</label> 
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Coupon Code *</label> 
+                                    <input type="text" v-model="form.coupon_code" class="form-control" placeholder="Coupon Code" required />
+                                </div>
+                            </div>						
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Amount Type *</label> 
+                                    <select class="form-control" v-model="form.amount_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="1">Amount</option>
+                                        <option value="2">%</option>
+                                    </select>
+                                </div>
+                            </div>	
 
-									 <select class="form-control">
-										<option value="1">Publish</option>
-										<option value="0">Not Publish</option>
-									</select>
-									
-								</div>
-							</div> -->
-							</div>			
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Amount *</label> 
+                                    <input type="number" step="0.01" v-model="form.amount" class="form-control" placeholder="Coupon Amount" required />
+                                </div>
+                            </div>	
 
-					 <div class="row">								
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Max Amount *</label> 
+                                    <input type="number" step="0.01" v-model="form.max_amount_limit" class="form-control" placeholder="Maximum Amount" required />
+                                </div>
+                            </div>	
 
-							<div class="col-md-12 text-right">
-								<button type="submit" class="btn btn-primary">{{ button_name }}</button>
-								<button type="close" class="btn btn-default" data-dismiss="modal">Close</button>
-							</div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Valid Date *</label> 
+                                    <!-- ✅ Replaced v2-datepicker with standard HTML5 date input -->
+                                    <input type="date" v-model="form.valid_date" class="form-control" required />
+                                </div>
+                            </div>	
+                        </div>			
 
-
-						</div>
-					</form>
-
-				</div>
-			</div>
-		</div>
-	</div>
+                        <div class="row" style="margin-top: 20px;">								
+                            <div class="col-md-12 text-right">
+                                <button type="submit" class="btn btn-primary" :disabled="isSaving">
+                                    {{ buttonName }}
+                                </button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
-<script>
-	
-	import {EventBus} from  '../../../../vue-assets';
-	import Mixin from  '../../../../mixin';
+<script setup>
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
+import { EventBus, base_url } from '../../../../vue-assets';
+import { useMixin } from '../../../../mixin';
 
-	export default {
+// ✅ State
+const isSaving = ref(false);
+const buttonName = ref("Update");
+const validationError = ref(null);
 
-		mixins : [Mixin],
+const getDefaultForm = () => ({
+    id: '',  
+    coupon_code: '',  
+    amount_type: '',  
+    amount: '',  
+    max_amount_limit: '', 
+    valid_date: '',
+    status: 1,
+});
 
-		data(){
+const form = reactive(getDefaultForm());
 
-			return {
+// ✅ Methods
+const update = async () => {
+    isSaving.value = true;
+    buttonName.value = "Updating...";
 
-				form : {
-					id : '',  
-					coupon_code : '',  
-					amount_type : '',  
-					amount : '',  
-                    max_amount_limit : '', 
-                    valid_date : '',
-					status : 1,
-                },
-                pickerOptions2: {
-                    shortcuts: [{
-                        text: 'Today',
-                        onClick (picker) {
-                            picker.$emit('pick', new Date());
-                        }
-                    }, {
-                        text: 'Yesterday',
-                        onClick (picker) {
-                            const date = new Date();
-                            date.setTime(date.getTime() - 3600 * 1000 * 24);
-                            picker.$emit('pick', date);
-                        }
-                    }, {
-                        text: 'A week ago',
-                        onClick (picker) {
-                            const date = new Date();
-                            date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);
-                            picker.$emit('pick', date);
-                        }
-                    }]
-                },
-				url : base_url,
-				button_name : "Update",
-				validation_error : null, 
-				isLoading: false,
-
-			}
-
-		},
-
-		mounted()
-		{
-          
-          var _this = this;
-
-          EventBus.$on('update-coupon',function(value) {
-          	 _this.form = value;
-           	$('#update-coupon').modal('show');
-
-          });
-
-		},
-
-
-		methods : {
-
-            update(){
-
-            	this.button_name = "Updating...";
-            	axios.put(base_url+'admin/coupon/'+this.form.id,this.form)
-            	.then(response => {
-            		if(response.data.status === 'success'){
-            			$('#update-coupon').modal('hide');
-            			this.resetForm();
-            			this.successMessage(response.data);
-            			EventBus.$emit('coupon-created');
-
-            			this.button_name = "Update";
-					}
-				   else
-				   {
-					  this.successMessage(response.data);	
-					  this.button_name = "Update";
-					}					
-
-            		
-
-            	})
-            	.catch(err => {
-
-            		if (err.response.status == 422) 
-            		{
-
-            			this.validation_error = err.response.data.errors;
-
-                        this.validationError();
-
-            			this.button_name = "Update";
-            		} 
-            		else 
-            		{
-            			this.successMessage(err);
-						// this.isloading = false;
-						this.button_name = "Update";
-					}
-				})
-
-            },
-
-          
-            resetForm(){
-
-            	this.form = {
-					id : '',  
-					coupon_code : '',  
-					amount_type : '',  
-					amount : '',  
-                    limit_amount : '', 
-                    valid_date : '',
-					status : 1,
-				};
-
-				this.validation_error = null;
-				this.isLoading = false;
-
-            },
-         
-        },
-
-        watch : {
-
+    try {
+        const response = await axios.put(`${base_url}admin/coupon/${form.id}`, form);
+        
+        if (response.data.status === 'success') {
+            if (typeof $ !== 'undefined') {
+                $('#update-coupon').modal('hide');
+            }
+            resetForm();
+            Mixin.methods.successMessage(response.data);
+            EventBus.$emit('coupon-created');
+        } else {
+            Mixin.methods.successMessage(response.data);	
         }
-
+        buttonName.value = "Update";
+    } catch (err) {
+        if (err.response?.status === 422) {
+            validationError.value = err.response.data.errors;
+            Mixin.methods.validationError?.();
+        } else {
+            Mixin.methods.successMessage(err);
+        }
+        buttonName.value = "Update";
+    } finally {
+        isSaving.value = false;
     }
+};
 
+const resetForm = () => {
+    Object.assign(form, getDefaultForm());
+    validationError.value = null;
+};
+
+// ✅ Event Handlers
+const handleUpdateCoupon = (value) => {
+    Object.assign(form, value); // Safely populate form with coupon data
+    
+    if (typeof $ !== 'undefined') {
+        $('#update-coupon').modal('show');
+    }
+};
+
+// ✅ Lifecycle Hooks
+onMounted(() => {
+    EventBus.$on('update-coupon', handleUpdateCoupon);
+});
+
+onBeforeUnmount(() => {
+    EventBus.$off('update-coupon', handleUpdateCoupon);
+});
 </script>
-
-<style scoped="">
-.modal-custom {
-
-	max-width: 90% !important;
-
-}
-
-@media screen and (max-width: 573px)
-{
-
-
-	.modal-custom {
-
-		max-width: 100% !important;
-		background-color: #000 !important;
-	}
-
-
-
-}
-</style>

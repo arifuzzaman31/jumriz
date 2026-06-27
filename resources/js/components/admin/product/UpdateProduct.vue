@@ -369,7 +369,7 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { EventBus, base_url } from "../../../vue-assets";
-import Mixin from "../../../mixin";
+import { useMixin } from "../../../mixin";
 
 // ✅ Vue 3 Quill Editor
 import { QuillEditor } from '@vueup/vue-quill';

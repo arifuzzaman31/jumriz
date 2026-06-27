@@ -28,8 +28,3 @@
     </div>
 
 @endsection
-
-@push('script')
- <script src="{{ asset('js/pages.js') }}"></script>
- 
-@endpush

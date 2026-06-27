@@ -24,7 +24,3 @@
 </div>
 
 @endsection
-
-@push('script')
- <script src="{{ asset('js/order.js') }}"></script>
-@endpush

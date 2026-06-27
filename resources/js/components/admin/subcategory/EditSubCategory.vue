@@ -124,7 +124,7 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { EventBus, base_url } from '../../../vue-assets.js';
-import Mixin from '../../../mixin';
+import { useMixin } from '../../../mixin';
 
 // ✅ Props
 const props = defineProps({

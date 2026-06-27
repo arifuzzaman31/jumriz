@@ -1,217 +1,208 @@
 <template>
-<div class="row">
-    <div class="col-lg-12" >
-        <div class="ibox animated fadeInRightBig">
-            <div class="ibox-title">
-                <h5>role List</h5>
-                <div class="ibox-tools">
-                    <a class="collapse-link">
-                        <i class="fa fa-chevron-up"></i>
-                    </a>
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        <i class="fa fa-wrench"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-user">
-                        <li><a href="#" class="dropdown-item">Config option 1</a>
-                        </li>
-                        <li><a href="#" class="dropdown-item">Config option 2</a>
-                        </li>
-                    </ul>
-                    <a class="close-link">
-                        <i class="fa fa-times"></i>
-                    </a>
-                </div>
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="ibox animated fadeInRightBig">
+        <div class="ibox-title">
+          <h5>Role List</h5>
+          <div class="ibox-tools">
+            <a class="collapse-link">
+              <i class="fa fa-chevron-up"></i>
+            </a>
+            <a class="dropdown-toggle" data-bs-toggle="dropdown" href="#">
+              <i class="fa fa-wrench"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-user">
+              <li><a href="#" class="dropdown-item">Config option 1</a></li>
+              <li><a href="#" class="dropdown-item">Config option 2</a></li>
+            </ul>
+            <a class="close-link">
+              <i class="fa fa-times"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div class="ibox-content">
+          <div class="row">
+            <div class="col-sm-5 m-b-xs"></div>
+            <div class="col-sm-4 m-b-xs"></div>
+            <div class="col-sm-3">
+              <div class="input-group">
+                <input
+                  placeholder="Search By Name"
+                  type="text"
+                  class="form-control form-control-sm"
+                  v-model="keyword"
+                  @keyup.enter="getRole()"
+                />
+                <span class="input-group-append"></span>
+              </div>
             </div>
-            <div class="ibox-content">
-                <div class="row">
-                    <div class="col-sm-5 m-b-xs">
+          </div>
 
-                    </div>
-                    <div class="col-sm-4 m-b-xs">
+          <div
+            class="table-responsive"
+            style="margin-top: 15px"
+            v-if="!isLoading"
+          >
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Role Name</th>
+                  <th>Permissions</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="value in roles.data" :key="value.id">
+                  <td>{{ value.role_name }}</td>
+                  <td>
+                    <a
+                      @click.prevent="assignPermission(value.id)"
+                      href="#"
+                      class="btn btn-secondary rounded"
+                    >
+                      <i class="fa fa-key"></i>
+                    </a>
+                  </td>
+                  <td>
+                    <a
+                      @click.prevent="edit(value)"
+                      class="btn btn-primary btn-sm"
+                      href="#"
+                    >
+                      <i class="fa fa-edit" title="Edit"></i>
+                    </a>
+                    <a
+                      @click.prevent="deleteRole(value.id)"
+                      class="btn btn-danger btn-sm"
+                      href="#"
+                    >
+                      <i class="fa fa-trash" title="Delete"></i>
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-                    </div>
-                    <div class="col-sm-3">
-                        <div class="input-group">
-                            <input placeholder="Search By Name" type="text" class="form-control form-control-sm" 
-                             v-model="keyword"
-                             @keyup="getrole()"> 
-                            <span class="input-group-append">
-                      <!--    <button type="button" class="btn btn-sm btn-primary">Go!
-                        </button> -->
-                    </span></div>
-
-                    </div>
-                </div>
-                <div class="table-responsive" style="margin-top: 15px;" v-if="!isLoading">
-                    <table class="table table-bordered">
-                        <thead>
-                        <tr>
-                            <th>Role Name</th>
-                            <th>Permissions</th>
-                            <th>Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr v-for="(value,index) in roles.data" :key="index">
-                            <td>{{ value.role_name }}</td>
-                            <td><a @click.prevent="perMission(value.id)" href="" class="btn btn-secondary rounded"><i class="fa fa-key"></i></a></td>
-                            <td>
-                                <a @click.prevent="edit(value)" class="btn btn-primary" href="#"><i class="fa fa-edit" title="Edit"></i></a> 
-                                <a @click.prevent="deleterole(value.id)" class="btn btn-danger" href="#"><i class="fa fa-trash" title="Delete"></i></a>
-                            </td>
-                        </tr>
-
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="col-md-12 text-center" v-else>
-                    <img :src="url+'images/loading.gif'">
-                </div>
-
+            <!-- Empty State -->
+            <div
+              v-if="roles.data && roles.data.length === 0"
+              class="text-center text-muted py-3"
+            >
+              No roles found.
             </div>
-        </div>
+          </div>
 
-        <div class="ibox animated fadeInRightBig">
-           <pagination v-if="roles" :pageData="roles"></pagination> 
+          <div class="col-md-12 text-center" v-else>
+            <img :src="`${base_url}/images/loading.gif`" alt="Loading..." />
+          </div>
         </div>
+      </div>
 
-        <div class="ibox">
-            <edit-role></edit-role>
-            <role-permission></role-permission>
-        </div>
+      <div class="ibox animated fadeInRightBig">
+        <Pagination v-if="roles" :pageData="roles" @page-clicked="pageClicked" />
+      </div>
+
+      <div class="ibox">
+        <EditRole />
+        <Permission />
+      </div>
     </div>
-
-
-
-
-
-</div>
+  </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { emitter, base_url } from "../../../vue-assets"; // Update path as needed
+import Pagination from "../pagination/Pagination.vue";
+import EditRole from "./EditRole.vue";
+import Permission from "./Permission.vue";
 
-    import { EventBus } from  '../../../vue-assets';
+// Reactive State
+const roles = ref([]);
+const isLoading = ref(false);
+const keyword = ref("");
 
-    import Mixin from  '../../../mixin';
+// Fetch roles
+const getRole = async (page = 1) => {
+  isLoading.value = true;
 
-    import Pagination from  '../pagination/Pagination';
+  try {
+    const response = await axios.get(`${base_url}admin/role-list`, {
+      params: {
+        page: page,
+        keyword: keyword.value,
+      },
+    });
+    
+    roles.value = response.data;
+  } catch (error) {
+    console.error("Error fetching roles:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
-    import UpdateRole from './EditRole';
-    import Permission from './Permission';
-	
-	export default {
+// Handle pagination click
+const pageClicked = (pageNo) => {
+  getRole(pageNo);
+};
 
-        mixins : [Mixin],
+// Edit role (Note: Original code passed the entire 'value' object to the event)
+const edit = (roleData) => {
+  emitter.emit("update-role", roleData);
+};
 
-        components : {
-         
-         'pagination' : Pagination,
-         'edit-role' : UpdateRole,
-         'role-permission' : Permission,
+// Assign permission
+const assignPermission = (id) => {
+  emitter.emit("assign-permission", id);
+};
 
-        },
+// Delete role
+const deleteRole = async (id) => {
+  try {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
 
-       data(){
-         
-         return {
-            
-            roles : [],
+    if (result.isConfirmed) {
+      const res = await axios.get(`${base_url}admin/role/delete/${id}`);
+      
+      Swal.fire({
+        icon: "success",
+        title: res.data.message || "Deleted successfully!",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      
+      getRole(); // Refresh list
+    }
+  } catch (error) {
+    console.error("Error deleting role:", error);
+    Swal.fire("Error!", "Something went wrong.", "error");
+  }
+};
 
-            isLoading : false,
+// Refresh data handler for event bus
+const refreshData = () => {
+  getRole();
+};
 
-            keyword : '',
+// Lifecycle hooks
+onMounted(() => {
+  getRole();
+  emitter.on("role-created", refreshData);
+});
 
-            url : base_url,
-
-         }
-
-       },
-
-       mounted(){
-
-
-        // this  will not work in eventBus that why 
-        // we are initializing with _this
-
-        var _this = this;
-
-        _this.getrole();
-
-        EventBus.$on('role-created',function(){
-
-            // getting updated data when insert update delete happend 
-
-        _this.getrole();
-
-
-        });
-
-
-
-       },
-
-       methods : {
-       
-
-        getrole(page = 1){
-         this.isLoading = true;
-         axios.get(base_url+'admin/role-list?page='+page+'&keyword='+this.keyword)
-              .then(response => {
-               this.roles = response.data;
-               this.isLoading = false;
-              });
-        },
-
-        pageClicked(pageNo){
-        var vm = this;
-        vm.getrole(pageNo);
-        },
-
-        // edit role 
-
-        edit(id){           
-            EventBus.$emit('update-role',id);
-        },
-
-        perMission(id){
-
-          EventBus.$emit('assign-permission',id);
-
-        },
-
-
-        // delete role 
-
-        deleterole(id){
-        Swal.fire({
-            title: 'Are you sure ?',
-            text: "You won't be able to revert this!",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        },() => {
-
-        }).then((result) => {
-            if (result.value) {
-
-                axios.get(base_url+'admin/role/delete/'+id)
-                .then(res => {
-
-                    this.successMessage(res.data);
-                    this.getrole();
-                })
-            }
-        }) 
-
-       },
-
-
-
-       }
-
-	}
-
+onBeforeUnmount(() => {
+  emitter.off("role-created", refreshData);
+});
 </script>

@@ -28,8 +28,3 @@
     </div>
 
 @endsection
-
-@push('script')
- <script src="{{ asset('js/shop_setting.js') }}"></script>
-
-@endpush

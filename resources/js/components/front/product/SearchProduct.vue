@@ -53,7 +53,7 @@
 
 <script>
 import { EventBus } from "../../../vue-assets";
-import Mixin from "../../../mixin";
+import { useMixin } from "../../../mixin";
 import SingleProduct from "./SingleProduct";
 import InfiniteLoading from "vue-infinite-loading";
 

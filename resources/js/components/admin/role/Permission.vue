@@ -1,188 +1,221 @@
 <template>
-	<div id="assign-role" class="modal fade" aria-hidden="true">
-		<div class="modal-dialog modal-lg">
-			<div class="modal-content">
+  <div id="assign-role" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="m-t-none m-b">
+            Assigning Permission To
+            <strong class="text-primary">{{ role.role_name }}</strong>
+          </h3>
+        </div>
 
-				<div class="modal-header">
-		         <h3 class="m-t-none m-b">Assinging Permission To <strong class="text-primary">{{ role.role_name }}</strong></h3>
-				</div>
-		<div class="modal-body">
-					<div class="col-md-12">
+        <div class="modal-body">
+          <div class="col-md-12">
+            <!-- Display Validation Errors (Missing in original) -->
+            <div v-if="errors" class="col-md-12" style="margin-bottom: 15px">
+              <ul>
+                <li
+                  class="text-danger"
+                  v-for="(error, index) in Object.values(errors)"
+                  :key="index"
+                >
+                  {{ error[0] }}
+                </li>
+              </ul>
+            </div>
 
-							<form @submit.prevent="AssignRole()" role="form">
+            <form @submit.prevent="AssignRole" role="form">
+              <div
+                class="row"
+                v-for="(value, index) in role.menus"
+                :key="value.id || index"
+              >
+                <div v-if="index !== 0" class="col-md-12">
+                  <hr />
+                </div>
 
-								<div class="row" v-for="(value,index) in role.menus" :key="index">
-									<div v-if="index !== 0" class="col-md-12">
-										<hr>
-									</div>									
-									<div class="col-md-12">
-									<h3>{{ value.name }}</h3>
-				                    <div class="switch" v-if="value.sub_menu.length === 0">
-				                        <div class="onoffswitch">
-				                            <input :value="value.id" :id="value.id"  v-model="value.check" type="checkbox"  class="onoffswitch-checkbox"">
-				                            <label class="onoffswitch-label" :for="value.id">
-				                                <span class="onoffswitch-inner"></span>
-				                                <span class="onoffswitch-switch"></span>
-				                            </label>
-				                        </div>
-				                    </div>
-								    </div>
-									<div class="col-md-3" v-for="sub in value.sub_menu">
-										<h5 style="margin-top: 20px;">{{ sub.name }}</h5>
+                <div class="col-md-12">
+                  <h3>{{ value.name }}</h3>
+                  <div class="switch" v-if="value.sub_menu.length === 0">
+                    <div class="onoffswitch">
+                      <input
+                        :value="value.id"
+                        :id="'menu-' + value.id"
+                        v-model="value.check"
+                        type="checkbox"
+                        class="onoffswitch-checkbox"
+                      />
+                      <label class="onoffswitch-label" :for="'menu-' + value.id">
+                        <span class="onoffswitch-inner"></span>
+                        <span class="onoffswitch-switch"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
 
-				                    <div class="switch">
-				                        <div class="onoffswitch">
-				                            <input :value="sub.id" :id="sub.id"  v-model="sub.check" type="checkbox"  class="onoffswitch-checkbox"">
-				                            <label class="onoffswitch-label" :for="sub.id">
-				                                <span class="onoffswitch-inner"></span>
-				                                <span class="onoffswitch-switch"></span>
-				                            </label>
-				                        </div>
-				                    </div>										
+                <div
+                  class="col-md-3"
+                  v-for="sub in value.sub_menu"
+                  :key="sub.id"
+                >
+                  <h5 style="margin-top: 20px">{{ sub.name }}</h5>
+                  <div class="switch">
+                    <div class="onoffswitch">
+                      <input
+                        :value="sub.id"
+                        :id="'sub-' + sub.id"
+                        v-model="sub.check"
+                        type="checkbox"
+                        class="onoffswitch-checkbox"
+                      />
+                      <label class="onoffswitch-label" :for="'sub-' + sub.id">
+                        <span class="onoffswitch-inner"></span>
+                        <span class="onoffswitch-switch"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-									</div>									
-
-								</div>
-							
-                        
-									
-								<div class="row">
-									<div class="col-md-12">
-									<button style="margin-top: 20px;"  class="btn btn-lg  btn-primary float-right " type="submit"><strong>{{ button_name }}</strong></button>										
-									</div>
-
-								</div>
-							</form>
-
-							</div>
-							</div>
-							</div>
-							</div>
-						</div>
+              <div class="row">
+                <div class="col-md-12">
+                  <button
+                    style="margin-top: 20px"
+                    class="btn btn-lg btn-primary float-right"
+                    type="submit"
+                    :disabled="isUpdating"
+                  >
+                    <strong v-if="!isUpdating">{{ buttonName }}</strong>
+                    <span v-else>
+                      <i class="fa fa-spinner fa-spin"></i> Updating...
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
+import axios from "axios";
+import { emitter } from "../../../vue-assets"; // Update path as needed
 
-	
-	import {EventBus} from  '../../../vue-assets';
+// Reactive state
+const role = reactive({
+  id: 0,
+  role_name: "",
+  menus: [],
+});
 
-	import Mixin from  '../../../mixin';
+const buttonName = ref("Update");
+const errors = ref(null);
+const isUpdating = ref(false);
 
-	
-	export default{
+let modalInstance = null;
 
-		mixins:[Mixin],
+// Show success/error message (replace with your preferred notification system)
+const showMessage = (data, isError = false) => {
+  alert(data.message || (isError ? "Something went wrong" : "Operation successful"));
+};
 
-		data(){
+// Fetch basic role info
+const RoleInfo = async (id) => {
+  try {
+    const response = await axios.get(`${base_url}admin/role/${id}/edit`);
+    role.id = response.data.id;
+    role.role_name = response.data.role_name;
+  } catch (error) {
+    console.error("Error fetching role info:", error);
+  }
+};
 
-			return{
+// Fetch menus and their active states
+const getMenus = async (id) => {
+  try {
+    const response = await axios.get(`${base_url}admin/role/${id}`);
+    role.menus = response.data; // Vue 3 handles array deep reactivity automatically
+  } catch (error) {
+    console.error("Error fetching menus:", error);
+  }
+};
 
-				role : {
+// Open modal and load data concurrently
+const openModal = async (id) => {
+  errors.value = null;
+  role.id = id;
 
-					id : 0,
-					role_name : '',
-					menus : [],
-				},
+  // Fetch both role info and menus at the same time to speed up loading
+  await Promise.all([RoleInfo(id), getMenus(id)]);
 
-				button_name : 'Update',
+  // Show Bootstrap 5 modal
+  const modalEl = document.getElementById("assign-role");
+  if (modalEl) {
+    modalInstance = new bootstrap.Modal(modalEl);
+    modalInstance.show();
+  }
+};
 
-				
+// Save/Update permissions
+const AssignRole = async () => {
+  isUpdating.value = true;
+  errors.value = null;
 
-				errors : null
+  try {
+    const res = await axios.post(`${base_url}admin/permission`, role);
 
-			}
+    if (res.data.status === "success") {
+      showMessage(res.data);
+      if (modalInstance) {
+        modalInstance.hide(); // Hiding triggers 'hidden.bs.modal' event which emits refresh
+      }
+    } else {
+      showMessage(res.data, true);
+    }
+  } catch (err) {
+    if (err.response) {
+      errors.value = err.response.data.errors;
+    } else {
+      console.error("Error:", err);
+      showMessage(err, true);
+    }
+  } finally {
+    isUpdating.value = false;
+  }
+};
 
-		},
+// Listen for native Bootstrap modal close (when user clicks X or clicks outside)
+const handleModalHidden = () => {
+  emitter.emit("role-created", 1);
+};
 
-		created(){
+// Lifecycle hooks
+onMounted(() => {
+  emitter.on("assign-permission", openModal);
 
-			let vm = this;
+  // Native JS event listener replaces jQuery's $('#assign-role').on('hidden.bs.modal', ...)
+  const modalEl = document.getElementById("assign-role");
+  if (modalEl) {
+    modalEl.addEventListener("hidden.bs.modal", handleModalHidden);
+  }
+});
 
-			EventBus.$on('assign-permission',function(id){
+onBeforeUnmount(() => {
+  emitter.off("assign-permission", openModal);
 
-				vm.role.id = id;
+  // Cleanup native event listener
+  const modalEl = document.getElementById("assign-role");
+  if (modalEl) {
+    modalEl.removeEventListener("hidden.bs.modal", handleModalHidden);
+  }
 
-				vm.RoleInfo(id);
-				vm.getMenus(id);
-
-				$('#assign-role').modal('show');
-
-			});
-
-			$('#assign-role').on('hidden.bs.modal', function(){
-				vm.closeModal();
-			});
-
-
-
-		},
-
-		methods : {
-
-			RoleInfo(id){
-				axios.get(base_url+'admin/role/'+id+'/edit')
-				.then(response => {
-					this.role.id = response.data.id;
-					this.role.role_name = response.data.role_name;
-				})
-			},
-
-			getMenus(id){
-
-				axios.get(base_url+'admin/role/'+id)
-
-				.then(response => {
-                   
-                   this.role.menus = response.data;
-				})
-
-			},
-			AssignRole(){
-                this.button_name = 'Updating.....';
-				axios.post(base_url+'admin/permission',this.role)
-				.then(res => {
-
-					console.log(res);
-
-					if(res.data.status == 'success'){
-						this.successMessage(res.data);
-						this.button_name = 'Update';
-						EventBus.$emit('role-created',1);
-						this.closeModal();
-						$('#assign-role').modal('hide');
-					}
-					else{
-					 this.successMessage(res.data);
-					 this.button_name = 'Update';
-					}
-
-					
-				})
-				.catch(err => {
-
-					if(err.response){
-
-						this.errors = err.response.data.errors;
-					}
-					this.button_name = 'Update';
-				})
-								
-
-			},
-
-
-
-			closeModal(){
-				EventBus.$emit('role-created',1);
-			}			
-
-
-
-
-		}
-
-	}	
-
-
-
+  // Dispose Bootstrap modal instance
+  if (modalInstance) {
+    modalInstance.dispose();
+  }
+});
 </script>

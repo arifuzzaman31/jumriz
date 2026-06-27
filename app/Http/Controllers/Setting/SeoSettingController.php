@@ -43,7 +43,7 @@ class SeoSettingController extends Controller
         $request->validate(
             [
                 'title'         => 'required',
-                'meta_image'    => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
+                'meta_image'    => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
                 'sitemap_link'  => 'required',
                 'author'        => 'required',
                 'description'   => 'required'

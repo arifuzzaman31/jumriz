@@ -96,7 +96,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
 import { EventBus, base_url } from '../../../vue-assets';
-import Mixin from '../../../mixin';
+import { useMixin } from '../../../mixin';
 
 // ✅ State
 const isSaving = ref(false);

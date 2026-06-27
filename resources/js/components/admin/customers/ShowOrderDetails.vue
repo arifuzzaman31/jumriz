@@ -58,12 +58,11 @@
 	
 	import {EventBus} from  '../../../vue-assets';
 
-	import Mixin from  '../../../mixin';
+	import { useMixin } from  '../../../mixin';
 	import Pagination from  '../pagination/Pagination';
+	const { successMessage, validationError: showValidationError } = useMixin()
 
 	export default {
-
-		mixins : [Mixin],
 
 		components : {
          

@@ -205,7 +205,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { EventBus, base_url } from '../../../vue-assets'; // ✅ Import EventBus
-import Mixin from '../../../mixin';
+import { useMixin } from '../../../mixin';
 import Pagination from '../pagination/Pagination.vue';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.css';

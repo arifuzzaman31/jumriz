@@ -26,6 +26,39 @@ import ViewSubSubCategory from './components/admin/subsubcategory/ViewSubSubCate
 
 import CreateProduct from './components/admin/product/CreateProduct.vue';
 import ViewProduct from './components/admin/product/ViewProduct.vue';
+
+import CreateCampaign from './components/admin/offers/campaign/CreateCampaign.vue';
+import ViewCampaign from './components/admin/offers/campaign/ViewCampaign.vue';
+
+// Slider
+import CreateSlider from './components/admin/offers/slider/CreateSlider.vue';
+import ViewSlider from './components/admin/offers/slider/ViewSlider.vue';
+
+
+// Coupon
+import CreateCoupon from './components/admin/offers/coupon/CreateCoupon.vue';
+import ViewCoupon from './components/admin/offers/coupon/ViewCoupon.vue';
+
+// Customer Coupon
+import CreateCustomerCoupon from './components/admin/offers/customer_coupon/CreateCustomerCoupon.vue';
+import ViewCustomerCoupon from './components/admin/offers/customer_coupon/ViewCustomerCoupon.vue';
+
+import ViewOrder from './components/admin/order/ViewOrder.vue';
+import viewAreaOrder from './components/admin/order/viewAreaOrder.vue';
+
+import CreateRole from './components/admin/role/CreateRole.vue';
+import ViewRole from './components/admin/role/ViewRole.vue';
+
+import CreateCurrency from './components/admin/setting/currency/CreateCurrency.vue';
+import ViewCurrency from './components/admin/setting/currency/ViewCurrency.vue';
+
+import SeoSetting from './components/admin/setting/seo/SeoSetting.vue';
+// import ShopSetting from './components/admin/setting/shop/ShopSetting.vue';
+// import TrialSetting from './components/admin/setting/trial/TrialSetting.vue';
+// import PwaSetting from './components/admin/setting/pwa/PwaSetting.vue';
+import DeliveryDateSlot from './components/admin/setting/slot/DeliveryDateSlot.vue';
+import CreateTimeSlot from './components/admin/setting/slot/CreateTimeSlot.vue';
+import ViewTimeSlot from './components/admin/setting/slot/ViewTimeSlot.vue';
 // Initialize the Vue 3 Application instance
 const app = createApp({});
 
@@ -51,10 +84,38 @@ app.component('create-subsubcategory', CreateSubSubCategory);
 app.component('view-subsubcategory', ViewSubSubCategory);
 app.component('create-product', CreateProduct);
 app.component('view-product', ViewProduct);
+
+app.component('create-campaign', CreateCampaign);
+app.component('view-campaign', ViewCampaign);
+
+app.component('create-slider', CreateSlider);
+app.component('view-slider', ViewSlider);
+
+app.component('create-coupon', CreateCoupon);
+app.component('view-coupon', ViewCoupon);
+
+app.component('create-customer-coupon', CreateCustomerCoupon);
+app.component('view-customer-coupon', ViewCustomerCoupon);
+
+app.component('view-order', ViewOrder);
+app.component('area-order', viewAreaOrder);
+
+app.component('create-role', CreateRole);
+app.component('view-role', ViewRole);
+
+app.component('seo-setting', SeoSetting);
+// app.component('shop-setting', ShopSetting);
+// app.component('trial-setting', TrialSetting);
+// app.component('pwa-setting', PwaSetting);
+app.component('date-slot-setting', DeliveryDateSlot);
+app.component('create-time-slot', CreateTimeSlot);
+app.component('view-time-slot', ViewTimeSlot);
+app.component('create-currency', CreateCurrency);
+app.component('view-currency', ViewCurrency);
 // Inject plugins using the new app.use() chain syntax
 app.use(VueLazyload, {
-    loading: base_url + 'images/loading.gif',
-    error: base_url + 'images/error.png',
+    loading: base_url + '/images/loading.gif',
+    error: base_url + '/images/error.png',
 });
 
 // Mount to the DOM container element

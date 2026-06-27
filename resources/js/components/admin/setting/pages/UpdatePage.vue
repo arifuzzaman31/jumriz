@@ -39,7 +39,7 @@
 <script>
 	import { EventBus } from  '../../../../vue-assets';
 
-	import Mixin from  '../../../../mixin';
+	import { useMixin } from  '../../../../mixin';
 	import { VueEditor } from "vue2-editor";
 	import Multiselect from 'vue-multiselect'
 

@@ -157,7 +157,7 @@ import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { EventBus, base_url } from '../../../vue-assets';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.css';
-import Mixin from '../../../mixin';
+import { useMixin } from '../../../mixin';
 
 const props = defineProps({
   categories: { type: Array, default: () => [] },

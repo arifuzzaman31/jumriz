@@ -96,15 +96,14 @@
 
     import { EventBus } from  '../../../vue-assets';
 
-    import Mixin from  '../../../mixin';
+    import { useMixin } from  '../../../mixin';
 
     import Pagination from  '../pagination/Pagination.vue';
 
     import UpdateCategory from './EditCategory.vue';
-	
-	export default {
+	const { successMessage, validationError: showValidationError } = useMixin()
 
-        mixins : [Mixin],
+	export default {
 
         components : {
          

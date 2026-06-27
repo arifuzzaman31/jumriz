@@ -128,7 +128,7 @@
 
  <script>
  import { EventBus } from "../../../vue-assets";
- import Mixin from "../../../mixin";
+ import { useMixin } from "../../../mixin";
  import { useCartStore } from '../../../../store/index';
 
  export default {

@@ -9,17 +9,21 @@
           </button>
         </div>
         <div class="modal-body">
-          <form @submit.prevent="save()">
+          <form @submit.prevent="save">
             <div class="row">
               <div
                 class="col-md-12"
-                v-if="validation_error"
+                v-if="validationError"
                 style="margin-top: 20px"
               >
                 <div class="form-group">
                   <div>
                     <ul>
-                      <li class="text-danger" v-for="error in validation_error">
+                      <li
+                        class="text-danger"
+                        v-for="(error, index) in validationError"
+                        :key="index"
+                      >
                         {{ error[0] }}
                       </li>
                     </ul>
@@ -42,32 +46,38 @@
 
               <div class="col-md-6">
                 <div class="form-group">
-                  <label>Slider Image (1920 X 420)</label
-                  ><small>
+                  <label>Slider Image (1920 X 420)</label>
+                  <small>
                     Image best size is (1920 X 420), all image must be same
-                    size.</small
-                  >
+                    size.
+                  </small>
                   <br />
                   <div
                     class="fileinput fileinput-new"
                     data-provides="fileinput"
                   >
-                    <span class="btn btn-block btn-primary btn-file"
-                      ><span class="fileinput-new"
-                        ><i class="fa fa-camera"></i> Chose Image</span
-                      >
-                      <span class="fileinput-exists">Change Image</span
-                      ><input type="file" name="..." @change="onImageChange"
-                    /></span>
+                    <span class="btn btn-block btn-primary btn-file">
+                      <span class="fileinput-new">
+                        <i class="fa fa-camera"></i> Choose Image
+                      </span>
+                      <span class="fileinput-exists">Change Image</span>
+                      <input
+                        type="file"
+                        name="slider_banner"
+                        accept="image/*"
+                        @change="onImageChange"
+                      />
+                    </span>
 
                     <img
-                      style="height: 80px"
-                      v-if="form.slider_banner"
-                      :src="form.slider_banner"
+                      v-if="imagePreview"
+                      :src="imagePreview"
+                      style="height: 80px; margin-top: 10px"
                     />
                   </div>
                 </div>
               </div>
+
               <div class="col-md-6">
                 <div class="form-group">
                   <label>URL*</label>
@@ -83,7 +93,6 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label>Slider Status*</label>
-
                   <select class="form-control" v-model="form.status">
                     <option value="1">Publish</option>
                     <option value="0">Not Publish</option>
@@ -94,11 +103,14 @@
 
             <div class="row">
               <div class="col-md-12 text-right">
-                <button type="submit" class="btn btn-primary">
-                  {{ button_name }}
+                <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                  <span v-if="isLoading">
+                    <i class="fa fa-spinner fa-spin"></i> Saving...
+                  </span>
+                  <span v-else>{{ buttonName }}</span>
                 </button>
                 <button
-                  type="close"
+                  type="button"
                   class="btn btn-default"
                   data-dismiss="modal"
                 >
@@ -113,101 +125,141 @@
   </div>
 </template>
 
-<script>
-import { EventBus } from "../../../../vue-assets";
-import Mixin from "../../../../mixin";
+<script setup>
+import { ref, reactive, onBeforeUnmount } from "vue";
+import axios from "axios";
+import { emitter } from "../../../../vue-assets"; // Update path as needed
 
-export default {
-  mixins: [Mixin],
+// Reactive state
+const form = reactive({
+  slider_title: "",
+  back_url: "",
+  description: "",
+  status: 1,
+});
 
-  data() {
-    return {
-      form: {
-        slider_title: "",
-        slider_banner: "",
-        back_url: "",
-        description: "",
-        status: 1,
-      },
+const imageFile = ref(null);
+const imagePreview = ref(null);
+const validationError = ref(null);
+const isLoading = ref(false);
+const buttonName = ref("Save");
 
-      button_name: "Save",
-      validation_error: null,
-      isLoading: false,
-    };
-  },
+// Image change handler - keeps File object instead of base64
+const onImageChange = (e) => {
+  const file = e.target.files[0];
+  
+  if (!file) return;
+  
+  // Validate file type
+  if (!file.type.startsWith("image/")) {
+    console.error("Please select an image file");
+    return;
+  }
+  
+  // Store the actual File object
+  imageFile.value = file;
+  
+  // Create preview URL (more efficient than base64)
+  if (imagePreview.value) {
+    URL.revokeObjectURL(imagePreview.value);
+  }
+  imagePreview.value = URL.createObjectURL(file);
+};
 
-  methods: {
-    // main feature image
-    onImageChange(e) {
-      let files = e.target.files || e.dataTransfer.files;
-      if (!files.length) return;
-      this.createImage(files[0]);
-    },
-    // creating main feature image
-    createImage(file) {
-      let reader = new FileReader();
-      let vm = this;
-      reader.onload = (e) => {
-        vm.form.slider_banner = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    },
+// Clean up object URL when component unmounts
+onBeforeUnmount(() => {
+  if (imagePreview.value) {
+    URL.revokeObjectURL(imagePreview.value);
+  }
+});
 
-    save() {
-      this.button_name = "Saving...";
-      axios
-        .post(base_url + "admin/slider", this.form)
-        .then((response) => {
-          if (response.data.status === "success") {
-            $("#modal-form").modal("hide");
-            this.resetForm();
-            EventBus.$emit("slider-created");
-            this.successMessage(response.data);
-            this.button_name = "Save";
-          } else {
-            this.successMessage(response.data);
-            this.button_name = "Save";
-          }
-        })
-        .catch((err) => {
-          if (err.response.status == 422) {
-            this.validation_error = err.response.data.errors;
+// Reset form
+const resetForm = () => {
+  form.slider_title = "";
+  form.back_url = "";
+  form.description = "";
+  form.status = 1;
+  
+  imageFile.value = null;
+  imagePreview.value = null;
+  validationError.value = null;
+  isLoading.value = false;
+  buttonName.value = "Save";
+};
 
-            this.validationError();
+// Show success message (replace with your preferred notification method)
+const showSuccessMessage = (message) => {
+  // Using alert as placeholder - replace with your notification system
+  alert(message.message || "Operation successful");
+};
 
-            this.button_name = "Save";
-          } else {
-            this.successMessage(err);
+// Show validation error notification
+const showValidationError = () => {
+  // Replace with your notification system
+  console.error("Validation errors occurred");
+};
 
-            // this.isloading = false;
-            this.button_name = "Save";
-          }
-        });
-    },
+// Save handler
+const save = async () => {
+  isLoading.value = true;
+  buttonName.value = "Saving...";
+  validationError.value = null;
 
-    resetForm() {
-      this.form = {
-        campaign_title: "",
-        banner: "",
-        meta_image: "",
-        start_date: "",
-        end_date: "",
-        status: 1,
+  try {
+    // Use FormData for file upload
+    const formData = new FormData();
+    formData.append("slider_title", form.slider_title);
+    formData.append("back_url", form.back_url);
+    formData.append("description", form.description);
+    formData.append("status", form.status);
+    
+    // Append file if exists
+    if (imageFile.value) {
+      formData.append("slider_banner", imageFile.value);
+    }
 
-        product: [],
-      };
+    const response = await axios.post(
+      `${base_url}admin/slider`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
-      this.products = [];
-      this.validation_error = null;
-      this.isLoading = false;
-    },
-  },
+    if (response.data.status === "success") {
+      // Close modal (jQuery - assuming Bootstrap is still used)
+      const modal = document.getElementById("modal-form");
+      if (modal) {
+        const bootstrapModal = bootstrap.Modal.getInstance(modal);
+        if (bootstrapModal) {
+          bootstrapModal.hide();
+        }
+      }
 
-  watch: {},
+      resetForm();
+      emitter.emit("slider-created");
+      showSuccessMessage(response.data);
+    } else {
+      showSuccessMessage(response.data);
+    }
+  } catch (err) {
+    if (err.response?.status === 422) {
+      validationError.value = err.response.data.errors;
+      showValidationError();
+    } else {
+      console.error("Error:", err);
+      showSuccessMessage({ message: "Something went wrong" });
+    }
+  } finally {
+    isLoading.value = false;
+    buttonName.value = "Save";
+  }
 };
 </script>
 
-<style scoped="">
+<style scoped>
 .modal-custom {
   max-width: 90% !important;
 }

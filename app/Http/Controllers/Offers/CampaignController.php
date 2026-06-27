@@ -8,9 +8,10 @@ use App\Http\Resources\Offer\CampaignResource;
 use App\Http\Resources\Product\ProductResource;
 use App\Models\Campaign;
 use App\Models\Product;
-use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class CampaignController extends Controller
 {
@@ -26,7 +27,7 @@ class CampaignController extends Controller
 
     public function productList(Request $request)
     {
-
+        // Log::info($request->keyword);
         if ($request->keyword != '') {
 
             $search_keyword = $request->keyword;
@@ -40,7 +41,8 @@ class CampaignController extends Controller
                 ->where('discount_status', '=', AllStatic::$inactive)
                 ->orderBy('product_name', 'ASC')
                 ->get();
-
+            // return $product;
+        // Log::info($product);
             return ProductResource::collection($product);
 
         } else {
@@ -86,8 +88,8 @@ class CampaignController extends Controller
     {
         $request->validate([
             'campaign_title' => 'required',
-            'banner'         => 'required|image64:jpeg,png,gif,jpg,webp,bmp',
-            'meta_image'     => 'required|image64:jpeg,png,gif,jpg,webp,bmp',
+            'banner'         => 'required|image|mimes:jpeg,png,gif,jpg,webp,bmp',
+            'meta_image'     => 'required|image|mimes:jpeg,png,gif,jpg,webp,bmp',
             'status'         => 'required',
 
         ]);
@@ -101,25 +103,24 @@ class CampaignController extends Controller
             $camp->title  = $request->campaign_title;
             $camp->status = $request->status;
 
-            $imageData = $request->get('banner');
-            $metaImage = $request->get('meta_image');
+            if ($request->hasFile('banner')) {
+                $file = $request->file('banner');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-            if ($imageData) {
-
-                $fileName = 'banner_image_' . uniqid() . '.' . explode('/', explode(':', substr($imageData, 0, strpos($imageData, ';')))[1])[1];
-                Image::make($request->get('banner'))->save('images/campaign/banner/' . $fileName);
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/campaign/banner'), $fileName);
 
                 $camp->image = $fileName;
-
             }
 
-            if ($metaImage) {
+            if ($request->hasFile('meta_image')) {
+                $file = $request->file('meta_image');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-                $metafile = 'meta_image' . uniqid() . '.' . explode('/', explode(':', substr($metaImage, 0, strpos($metaImage, ';')))[1])[1];
-                Image::make($request->get('meta_image'))->save('images/campaign/meta/' . $metafile);
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/campaign/meta'), $fileName);
 
-                $camp->meta_image = $metafile;
-
+                $camp->meta_image = $fileName;
             }
 
             $request->start_date = date('Y-M-d');
@@ -145,9 +146,10 @@ class CampaignController extends Controller
 
             return response()->json(['status' => 'success', 'message' => 'Campaign Added!']);
 
-        } catch (Exceptoin $e) {
+        } catch (Throwable $e) {
 
             // return $e;
+            Log::error(var_export($e,true));
             DB::rollBack();
             return response()->json(['status' => 'error', 'message' => 'Something Went Wrong']);
 
@@ -189,8 +191,8 @@ class CampaignController extends Controller
     {
         $request->validate([
             'campaign_title' => 'required',
-            'banner'         => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
-            'meta_image'     => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
+            'banner'         => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
+            'meta_image'     => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
             'status'         => 'required',
 
         ]);
@@ -204,33 +206,30 @@ class CampaignController extends Controller
             $camp->title  = $request->campaign_title;
             $camp->status = $request->status;
 
-            $imageData = $request->get('banner');
-            $metaImage = $request->get('meta_image');
-
-            if ($imageData) {
-
+            if ($request->hasFile('banner')) {
                 if (file_exists('images/campaign/banner/' . $camp->image) && !empty($camp->image)) {
                     unlink('images/campaign/banner/' . $camp->image);
                 }
+                $file = $request->file('banner');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-                $fileName = 'banner_image_' . uniqid() . '.' . explode('/', explode(':', substr($imageData, 0, strpos($imageData, ';')))[1])[1];
-                Image::make($request->get('banner'))->save('images/campaign/banner/' . $fileName);
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/campaign/banner'), $fileName);
 
                 $camp->image = $fileName;
-
             }
 
-            if ($metaImage) {
-
+            if ($request->hasFile('meta_image')) {
                 if (file_exists('images/campaign/meta/' . $camp->meta_image) && !empty($camp->meta_image)) {
                     unlink('images/campaign/meta/' . $camp->meta_image);
                 }
+                $file = $request->file('meta_image');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-                $metafile = 'meta_image' . uniqid() . '.' . explode('/', explode(':', substr($metaImage, 0, strpos($metaImage, ';')))[1])[1];
-                Image::make($request->get('meta_image'))->save('images/campaign/meta/' . $metafile);
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/campaign/meta'), $fileName);
 
-                $camp->meta_image = $metafile;
-
+                $camp->meta_image = $fileName;
             }
 
             $request->start_date = date('Y-M-d');
