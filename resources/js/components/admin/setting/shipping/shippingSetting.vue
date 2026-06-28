@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col-sm-10">
       <h3 class="m-t-none m-b">Update Setting</h3>
-      <form @submit.prevent="save()" role="form">
+      <form @submit.prevent="save" role="form">
         <div class="form-group">
           <label
             >Minimum Order Amount (Customer order amount must upto this
@@ -39,6 +39,7 @@
             class="form-control"
           />
         </div>
+
         <div class="form-group">
           <label
             >Discount Amount (enter how much discount will have in shipping cost
@@ -52,6 +53,7 @@
             class="form-control"
           />
         </div>
+
         <div class="form-group">
           <label
             >Wanna Take Shipping Cost Or Free? (if u off this switch shipping
@@ -59,12 +61,13 @@
           >
           <div class="switch">
             <div class="onoffswitch">
+              <!-- Removed redundant `? true : false` -->
               <input
                 type="checkbox"
-                :checked="form.shipping_status == 1 ? true : false"
+                :checked="form.shipping_status == 1"
                 class="onoffswitch-checkbox"
                 id="example1"
-                @change="shippingStatus()"
+                @change="toggleShippingStatus"
               />
               <label class="onoffswitch-label" for="example1">
                 <span class="onoffswitch-inner"></span>
@@ -73,6 +76,7 @@
             </div>
           </div>
         </div>
+
         <div class="form-group">
           <label
             >Wanna Apply Discount on Shipping Cost by Shipping Amount ? (if u on
@@ -86,7 +90,7 @@
                 :checked="form.discount_status == 1"
                 class="onoffswitch-checkbox"
                 id="example2"
-                @change="discountStatus()"
+                @change="toggleDiscountStatus"
               />
               <label class="onoffswitch-label" for="example2">
                 <span class="onoffswitch-inner"></span>
@@ -97,139 +101,131 @@
         </div>
 
         <div style="margin-bottom: 20px">
-          <button class="btn btn-lg btn-primary float-right" type="submit">
-            <strong>{{ button_name }}</strong>
+          <button
+            class="btn btn-lg btn-primary float-right"
+            type="submit"
+            :disabled="isSubmitting"
+          >
+            <strong>{{ buttonName }}</strong>
           </button>
         </div>
       </form>
     </div>
 
     <div
+      v-if="validationErrors"
       class="col-md-12"
-      v-if="validation_error"
       style="margin-top: 20px; margin-bottom: 10px"
     >
       <div class="form-group">
-        <div>
-          <ul>
-            <li
-              class="text-danger"
-              v-for="(error, index) in validation_error"
-              :key="index"
-            >
-              {{ error[0] }}
-            </li>
-          </ul>
-        </div>
+        <ul>
+          <li
+            v-for="(error, index) in validationErrors"
+            :key="index"
+            class="text-danger"
+          >
+            {{ error[0] }}
+          </li>
+        </ul>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { EventBus } from "../../../../vue-assets";
-import { useMixin } from "../../../../mixin";
+<script setup>
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { emitter, base_url } from '../../../../vue-assets'
+import { useMixin } from '../../../../mixin'
 
-export default {
-  name: "shippingSetting",
-  mixins: [Mixin],
+const { successMessage, validationError: showValidationError } = useMixin()
 
-  data() {
-    return {
-      form: {
-        minimum_order_amount: "",
-        shipping_amount: "",
-        order_amount: "",
-        discount_amount: "",
-        shipping_status: "",
-        discount_status: "",
-      },
+// --- State ---
+const isSubmitting = ref(false)
+const buttonName = ref('Update')
+const validationErrors = ref(null)
 
-      isLoading: false,
-      button_name: "update",
-      url: base_url,
-      validation_error: null,
-    };
-  },
+const form = reactive({
+  minimum_order_amount: '',
+  shipping_amount: '',
+  order_amount: '',
+  discount_amount: '',
+  shipping_status: '',
+  discount_status: '',
+})
 
-  mounted() {
-    // this  will not work in eventBus that why
-    // we are initializing with _this
+// --- Methods ---
 
-    var _this = this;
+const getSetting = async () => {
+  try {
+    const response = await axios.get(`${base_url}admin/setting/shipping/discount`)
+    Object.assign(form, response.data)
+  } catch (error) {
+    console.error('Error fetching shipping settings:', error)
+  }
+}
 
-    _this.getSetting();
+const save = async () => {
+  buttonName.value = 'Updating...'
+  isSubmitting.value = true
 
-    EventBus.$on("shipping-created", function () {
-      _this.getSetting();
-    });
-  },
+  try {
+    const response = await axios.post(
+      `${base_url}admin/setting/shipping/discount`,
+      form
+    )
 
-  methods: {
-    getSetting() {
-      axios
-        .get(base_url + "admin/setting/shipping/discount")
-        .then((response) => {
-          this.form.shipping_amount = response.data.shipping_amount;
-          this.form.minimum_order_amount = response.data.minimum_order_amount;
-          this.form.order_amount = response.data.order_amount;
-          this.form.discount_amount = response.data.discount_amount;
-          this.form.shipping_status = response.data.shipping_status;
-          this.form.discount_status = response.data.discount_status;
-        });
-    },
+    if (response.data.status === 'success') {
+      successMessage(response.data)
+      validationErrors.value = null
+      emitter.emit('shipping-created')
+    } else {
+      successMessage(response.data)
+    }
+  } catch (err) {
+    if (err.response?.status === 422) {
+      validationErrors.value = err.response.data.errors
+      showValidationError()
+    } else {
+      successMessage(err)
+    }
+  } finally {
+    buttonName.value = 'Update'
+    isSubmitting.value = false
+  }
+}
 
-    save() {
-      this.button_name = "Updating...";
+// Separate API calls for Toggle Switches
+const toggleShippingStatus = async () => {
+  try {
+    const response = await axios.post(`${base_url}admin/setting/shipping/status`)
+    if (response.data.status === 'success') {
+      successMessage(response.data)
+      form.shipping_status = response.data.shipping_status
+    }
+  } catch (error) {
+    console.error('Error updating shipping status:', error)
+  }
+}
 
-      axios
-        .post(base_url + "admin/setting/shipping/discount", this.form)
-        .then((response) => {
-          if (response.data.status === "success") {
-            this.successMessage(response.data);
-            this.button_name = "Update";
-            this.validation_error = null;
-            EventBus.$emit("shipping-created");
-          } else {
-            this.successMessage(response.data);
-            this.button_name = "Update";
-          }
-        })
-        .catch((err) => {
-          if (err.response.status == 422) {
-            this.validation_error = err.response.data.errors;
-            this.validationError();
-            this.button_name = "Update";
-          } else {
-            this.successMessage(err);
-            this.button_name = "Update";
-          }
-        });
-    },
+const toggleDiscountStatus = async () => {
+  try {
+    const response = await axios.post(`${base_url}admin/setting/discount/status`)
+    if (response.data.status === 'success') {
+      successMessage(response.data)
+      form.discount_status = response.data.discount_status
+    }
+  } catch (error) {
+    console.error('Error updating discount status:', error)
+  }
+}
 
-    shippingStatus: function () {
-      axios
-        .post(base_url + "admin/setting/shipping/status")
-        .then((response) => {
-          if (response.data.status === "success") {
-            this.successMessage(response.data);
-            this.form.shipping_status = response.data.shipping_status;
-            // EventBus.$emit('shipping-created');
-          }
-        });
-    },
+// --- Lifecycle ---
+onMounted(() => {
+  getSetting()
+  emitter.on('shipping-created', getSetting)
+})
 
-    discountStatus: function () {
-      axios
-        .post(base_url + "admin/setting/discount/status")
-        .then((response) => {
-          if (response.data.status === "success") {
-            this.successMessage(response.data);
-            this.form.discount_status = response.data.discount_status;
-            // EventBus.$emit('shipping-created');
-          }
-        });
-    },
-  },
-};
+onUnmounted(() => {
+  emitter.off('shipping-created', getSetting)
+})
 </script>

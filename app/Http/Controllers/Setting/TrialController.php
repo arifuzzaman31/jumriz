@@ -80,7 +80,7 @@ class TrialController extends Controller
             $result = Trial::first();
             $result->product_in_cart = $request->product_in_cart;
             $result->max_trial_item = $request->max_trial_item;
-            $result->trial_charge_per_item = $request->trial_charge_per_item;
+            $result->trial_charge_per_item = $request->trial_charge_per_item ? (int)$request->trial_charge_per_item : 0;
             $result->status = $request->status;
             $result->update();
             $message = ['status' => 'success', 'message' => 'Trial Updated Successfully'];

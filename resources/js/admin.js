@@ -53,8 +53,9 @@ import CreateCurrency from './components/admin/setting/currency/CreateCurrency.v
 import ViewCurrency from './components/admin/setting/currency/ViewCurrency.vue';
 
 import SeoSetting from './components/admin/setting/seo/SeoSetting.vue';
-// import ShopSetting from './components/admin/setting/shop/ShopSetting.vue';
-// import TrialSetting from './components/admin/setting/trial/TrialSetting.vue';
+import ShopSetting from './components/admin/setting/shop/ShopSetting.vue';
+import TrialSetting from './components/admin/setting/trial/TrialSetting.vue';
+import ShippingSetting from './components/admin/setting/shipping/shippingSetting.vue';
 // import PwaSetting from './components/admin/setting/pwa/PwaSetting.vue';
 import DeliveryDateSlot from './components/admin/setting/slot/DeliveryDateSlot.vue';
 import CreateTimeSlot from './components/admin/setting/slot/CreateTimeSlot.vue';
@@ -104,8 +105,9 @@ app.component('create-role', CreateRole);
 app.component('view-role', ViewRole);
 
 app.component('seo-setting', SeoSetting);
-// app.component('shop-setting', ShopSetting);
-// app.component('trial-setting', TrialSetting);
+app.component('shop-setting', ShopSetting);
+app.component('trial-setting', TrialSetting);
+app.component('shipping-setting', ShippingSetting);
 // app.component('pwa-setting', PwaSetting);
 app.component('date-slot-setting', DeliveryDateSlot);
 app.component('create-time-slot', CreateTimeSlot);

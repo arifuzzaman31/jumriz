@@ -45,15 +45,14 @@ class ShopSettingController extends Controller
                 'phone'       => 'required',
                 'email'       => 'required',
                 'theme_color' => 'required',
-                'header_logo' => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
-                'favicon'     => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
-                'footer_logo' => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
+                'header_logo' => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
+                'favicon'     => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
+                'footer_logo' => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
             ]
         );
 
         try
         {
-
             $shop =  ShopSetting::first();
             $shop->shop_name           =  $request->shop_name;
             $shop->shop_short_name     =  $request->shop_short_name;
@@ -70,50 +69,48 @@ class ShopSettingController extends Controller
             $shop->slider_status       =  $request->slider_status;
             $shop->onsale_status       =  $request->onsale_status;
             $shop->sidemenu_status     =  $request->sidemenu_status;
-            $header_logo               =  $request->get('header_logo');
-            $footer_logo               =  $request->get('footer_logo');
-            $favicon                   =  $request->get('favicon');
-            if ($header_logo) 
-            {
-            if (file_exists('images/logo/'.$shop->logo_header) && !empty($shop->logo_header))
-            {
-                unlink('images/logo/'.$shop->logo_header);
-            }   
+
+            if ($request->hasFile('header_logo')) {
+                if (file_exists('images/logo/'.$shop->header_logo) && !empty($shop->header_logo))
+                {
+                    unlink('images/logo/'.$shop->header_logo);
+                }
+                $file = $request->file('header_logo');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/logo'), $fileName);
+
+                $shop->logo_header = $fileName;
+            }
             
-            $fileName = uniqid().'.'.explode('/', explode(':', substr($header_logo, 0, strpos($header_logo, ';')))[1])[1];
-            Image::make($request->get('header_logo'))->save('images/logo/'.$fileName);
-            $shop->logo_header =  $fileName;
+            if ($request->hasFile('footer_logo')) {
+                if (file_exists('images/logo/'.$shop->logo_footer) && !empty($shop->logo_footer))
+                {
+                    unlink('images/logo/'.$shop->logo_footer);
+                }
+                $file = $request->file('footer_logo');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-            }            
+                $file->move(public_path('images/logo'), $fileName);
 
-            if ($footer_logo) 
-            {
-            if (file_exists('images/logo/'.$shop->logo_footer) && !empty($shop->logo_footer))
-            {
-                unlink('images/logo/'.$shop->logo_footer);
-            }   
+                $shop->logo_footer = $fileName;
+            }
             
-            $fileName = uniqid().'.'.explode('/', explode(':', substr($footer_logo, 0, strpos($footer_logo, ';')))[1])[1];
-            Image::make($request->get('footer_logo'))->save('images/logo/'.$fileName);
-            $shop->logo_footer =  $fileName;
+            if ($request->hasFile('favicon')) {
+                if (file_exists('images/logo/'.$shop->favicon) && !empty($shop->favicon))
+                {
+                    unlink('images/logo/'.$shop->favicon);
+                }
+                $file = $request->file('favicon');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-            }            
+                $file->move(public_path('images/logo'), $fileName);
 
-            if ($favicon) 
-            {
-            if (file_exists('images/logo/'.$shop->favicon) && !empty($shop->favicon))
-            {
-                unlink('images/logo/'.$shop->favicon);
-            }   
-            
-            $fileName = uniqid().'.'.explode('/', explode(':', substr($favicon, 0, strpos($favicon, ';')))[1])[1];
-            Image::make($request->get('favicon'))->save('images/logo/'.$fileName);
-            $shop->favicon =  $fileName;
-
+                $shop->favicon = $fileName;
             }
 
             $shop->update();
-            
             // clear cache 
             cache()->forget('shop-info');
 

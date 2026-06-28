@@ -31,15 +31,15 @@ class ShippingController extends Controller
         if ($request->shipping_amount < $request->discount_amount) {
            return response()->json(['status'=> 'error', 'message' => 'Discount amount may not grater then Shipping amount']);
         }
-    	$result = ShippingCost::find(1);
+    	$result = ShippingCost::first();
         $result->shipping_amount = $request->shipping_amount;
     	$result->minimum_order_amount = $request->minimum_order_amount;
     	$result->order_amount 	 = $request->order_amount;
     	$result->discount_amount = $request->discount_amount;
-    	$result->shipping_status = $request->shipping_status;
-		$result->vat_gst_amount = $request->vat_gst_amount;
-    	$result->vat_gst_status = $request->vat_gst_status;
-    	$result->discount_status = $request->discount_status;
+    	$result->shipping_status = $request->shipping_status ? (int)$request->shipping_status : 0;
+		$result->vat_gst_amount = $request->vat_gst_amount ? (int)$request->vat_gst_amount : 0;
+    	$result->vat_gst_status = $request->vat_gst_status ? (int)$request->vat_gst_status : 0;
+    	$result->discount_status = $request->discount_status ? (int)$request->discount_status : 0;
     	$result->update();
     	return response()->json(['status'=> 'success', 'message' => 'Data Updated Succefull']);
     }

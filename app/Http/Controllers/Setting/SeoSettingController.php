@@ -60,31 +60,28 @@ class SeoSettingController extends Controller
          $seo->sitemap_link =   $request->sitemap_link;
          $seo->author        =   $request->author;
          $seo->description   =   $request->description;
-         $imageData          =   $request->get('meta_image');
-        
-        if($imageData)
-        {
 
-        if (file_exists('images/setting/seo/'.$seo->meta_image) && !empty($seo->meta_image))
-        {
-            unlink('images/setting/seo/'.$seo->meta_image);
-        }   
-        
-        $fileName = uniqid().'.'.explode('/', explode(':', substr($imageData, 0, strpos($imageData, ';')))[1])[1];
-        Image::make($request->get('meta_image'))->save('images/setting/seo/'.$fileName);
-        $seo->meta_image =  $fileName;
+        if ($request->hasFile('meta_image')) {
+            if (file_exists('images/setting/seo/'.$seo->meta_image) && !empty($seo->meta_image))
+            {
+                unlink('images/setting/seo/'.$seo->meta_image);
+            }
+            $file = $request->file('meta_image');
+            $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-         }
+            // Move original file directly to the folder (no resizing)
+            $file->move(public_path('images/setting/seo'), $fileName);
+
+            $seo->meta_image = $fileName;
+        }
 
         if (count($request->seo_keyword) > 0) 
         {
-
            $keywords         =  implode(', ',array_column($request->seo_keyword, 'keyword'));
            $seo->keyword     =  $keywords;
-
         }
 
-         $seo->update();
+        $seo->update();
 
         // seo keyword for easy fetching taking in another table
          if (count($request->seo_keyword) > 0) 
