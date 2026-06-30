@@ -1,154 +1,162 @@
 <template>
-<div class="row">
-    <div class="col-lg-12" >
-        <div class="ibox animated fadeInRightBig">
-            <div class="ibox-content">
-                <div class="table-responsive" style="margin-top: 15px;">
-                    <table class="table table-bordered">
-                        <thead>
-                        <tr>
-                            <th>SL</th>
-                            <th>Page Name</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr v-for="value in pagesData.data" :key="value.id">
-                            <td>{{ value.id }}</td>
-                            <td>{{ value.title }}</td>
-                            <td>
-                                <div class="switch">
-                                    <div class="onoffswitch">
-                                        <input type="checkbox" :checked="value.publish == 1 ? true : false" class="onoffswitch-checkbox" :id="value.id" @change="changeStatus(value.id)">
-                                        <label class="onoffswitch-label" :for="value.id">
-                                            <span class="onoffswitch-inner"></span>
-                                            <span class="onoffswitch-switch"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <a @click.prevent="showData(value)" class="btn btn-success" href="#"><i class="fa fa-book" title="View"></i></a> 
-                                <a @click.prevent="edit(value)" class="btn btn-primary" href="#"><i class="fa fa-edit" title="Edit"></i></a>
-                                <a @click.prevent="deletePage(value.id)" class="btn btn-danger" href="#"><i class="fa fa-trash" title="Delete"></i></a>
-                            </td>
-                        </tr>
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="ibox animated fadeInRightBig">
+        <div class="ibox-content">
+          <div class="table-responsive" style="margin-top: 15px">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>SL</th>
+                  <th>Page Name</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="page in pagesData.data" :key="page.id">
+                  <td>{{ page.id }}</td>
+                  <td>{{ page.title }}</td>
+                  <td>
+                    <div class="switch">
+                      <div class="onoffswitch">
+                        <input
+                          type="checkbox"
+                          :checked="page.publish == 1"
+                          class="onoffswitch-checkbox"
+                          :id="`page-${page.id}`"
+                          @change="changeStatus(page.id)"
+                        />
+                        <label class="onoffswitch-label" :for="`page-${page.id}`">
+                          <span class="onoffswitch-inner"></span>
+                          <span class="onoffswitch-switch"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <button 
+                      @click="showData(page)" 
+                      class="btn btn-success" 
+                      type="button"
+                    >
+                      <i class="fa fa-book" title="View"></i>
+                    </button>
+                    <button 
+                      @click="edit(page)" 
+                      class="btn btn-primary" 
+                      type="button"
+                    >
+                      <i class="fa fa-edit" title="Edit"></i>
+                    </button>
+                    <button 
+                      @click="deletePage(page.id)" 
+                      class="btn btn-danger" 
+                      type="button"
+                    >
+                      <i class="fa fa-trash" title="Delete"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+      <div class="ibox animated fadeInRightBig">
+        <!-- ✅ FIXED: Added @page-clicked event listener -->
+        <pagination 
+          v-if="pagesData" 
+          :pageData="pagesData" 
+          @page-clicked="pageClicked" 
+        />
+      </div>
 
-        <div class="ibox animated fadeInRightBig">
-           <pagination v-if="pagesData" :pageData="pagesData"></pagination> 
-        </div>
-
-        <div class="ibox">
-            <update-page></update-page>
-        </div>
-        
-        <div class="ibox">
-            <show-page></show-page>
-        </div>
+      <div class="ibox">
+        <UpdatePage />
+      </div>
+      
+      <div class="ibox">
+        <ShowPage />
+      </div>
     </div>
-</div>
-
+  </div>
 </template>
-<script>
-	import { EventBus } from  '../../../../vue-assets';
-    import { useMixin } from  '../../../../mixin';
 
-    import Pagination from  '../../pagination/Pagination';
-    import Multiselect from 'vue-multiselect'
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { emitter, base_url } from '../../../../vue-assets'
+import { useMixin } from '../../../../mixin'
+import Pagination from '../../pagination/Pagination.vue'
+import UpdatePage from './UpdatePage.vue'
+import ShowPage from './ShowPage.vue'
 
-    import UpdatePage from './UpdatePage';
-    import showpages from './ShowPage.vue'
+const { successMessage } = useMixin()
 
-	export default {
-		name: "ViewPage",
-        mixins : [Mixin],
-        data(){
-            return {
-                pagesData: [],
-            }
-        },
+// --- State ---
+const pagesData = ref([])
 
-        components: {
-            'show-page' : showpages,
-            'pagination' : Pagination,
-            'update-page' : UpdatePage,
-        },
+// --- Methods ---
+const getPage = async (page = 1) => {
+  try {
+    const response = await axios.get(`${base_url}admin/setting/get-pages?page=${page}`)
+    pagesData.value = response.data
+  } catch (error) {
+    console.error('Error fetching pages:', error)
+  }
+}
 
-        mounted(){
-           
-        // this  will not work in eventBus that why 
-        // we are initializing with _this
-        var _this = this;
-        _this.getPage();
-        EventBus.$on('page-created',function(){
-        // getting updated data when insert update delete happend 
-            _this.getPage();
-        });
-       },
+const pageClicked = (pageNo) => {
+  getPage(pageNo)
+}
 
-       methods: {
-            getPage(page = 1){
-                axios.get(base_url+'admin/setting/get-pages?page='+page)
-                .then(response => {
-                    // console.log(response.data)
-                    this.pagesData = response.data;
-                })
-                .catch(error => console.log(error))
-            },
+const edit = (pageData) => {
+  emitter.emit('update-page', pageData)
+}
 
-            pageClicked(pageNo){
-                var vm = this;
-                vm.getPage(pageNo);
-            },
+const showData = (pageData) => {
+  emitter.emit('show-page', pageData)
+}
 
-            edit(value){
-                EventBus.$emit('update-page',value);
-            },
+const changeStatus = async (id) => {
+  try {
+    const response = await axios.get(`${base_url}admin/setting/change/publishing/status/${id}`)
+    successMessage(response.data)
+  } catch (error) {
+    console.error('Error changing status:', error)
+  }
+}
 
-            changeStatus(id){
-                axios.get(base_url+'admin/setting/change/publishing/status/'+id)
-                  .then(response => {
+const deletePage = async (id) => {
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  })
 
-                        this.successMessage(response.data);
-                        // this.form.status = response.data.status;
+  if (result.isConfirmed) {
+    try {
+      const res = await axios.get(`${base_url}admin/setting/page/${id}/delete`)
+      successMessage(res.data)
+      getPage() // Refresh list
+    } catch (error) {
+      console.error('Error deleting page:', error)
+    }
+  }
+}
 
-                });
-            },
+// --- Lifecycle ---
+onMounted(() => {
+  getPage()
+  emitter.on('page-created', getPage)
+})
 
-            showData(value){
-                EventBus.$emit('show-page',value);
-            },
-
-            deletePage(id){
-                Swal.fire({
-                    title: 'Are you sure ?',
-                    text: "You won't be able to revert this!",
-                    type: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                },() => {
-
-                }).then((result) => {
-                    if (result.value) {
-                        axios.get(base_url+'admin/setting/page/'+id+'/delete')
-                        .then(res => {
-                            // console.log(response.data)
-                            this.successMessage(res.data);
-                            this.getPage();
-                        })
-                    }
-                }) 
-            }
-       },
-
-	}
+onUnmounted(() => {
+  emitter.off('page-created', getPage)
+})
 </script>

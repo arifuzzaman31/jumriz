@@ -1,5 +1,5 @@
 <template>
-  <div id="modal-form" class="modal fade">
+  <div ref="modalRef" id="modal-form" class="modal fade">
     <div class="modal-dialog modal-custom">
       <div class="modal-content">
         <div class="modal-header">
@@ -62,6 +62,7 @@
                       </span>
                       <span class="fileinput-exists">Change Image</span>
                       <input
+                        ref="fileInputRef"
                         type="file"
                         name="slider_banner"
                         accept="image/*"
@@ -127,10 +128,16 @@
 
 <script setup>
 import { ref, reactive, onBeforeUnmount } from "vue";
-import axios from "axios";
-import { emitter } from "../../../../vue-assets"; // Update path as needed
+import { emitter, base_url } from "../../../../vue-assets"; 
+import { useMixin } from "../../../../mixin";
 
-// Reactive state
+const { successMessage, validationError: showValidationError } = useMixin();
+
+// --- Refs ---
+const modalRef = ref(null);
+const fileInputRef = ref(null);
+
+// --- Reactive State ---
 const form = reactive({
   slider_title: "",
   back_url: "",
@@ -144,19 +151,16 @@ const validationError = ref(null);
 const isLoading = ref(false);
 const buttonName = ref("Save");
 
-// Image change handler - keeps File object instead of base64
+// --- Methods ---
 const onImageChange = (e) => {
   const file = e.target.files[0];
-  
   if (!file) return;
   
-  // Validate file type
   if (!file.type.startsWith("image/")) {
     console.error("Please select an image file");
     return;
   }
   
-  // Store the actual File object
   imageFile.value = file;
   
   // Create preview URL (more efficient than base64)
@@ -166,14 +170,13 @@ const onImageChange = (e) => {
   imagePreview.value = URL.createObjectURL(file);
 };
 
-// Clean up object URL when component unmounts
-onBeforeUnmount(() => {
-  if (imagePreview.value) {
-    URL.revokeObjectURL(imagePreview.value);
+const closeModal = () => {
+  // Safe jQuery close for Bootstrap 3/4
+  if (modalRef.value) {
+    $(modalRef.value).modal('hide');
   }
-});
+};
 
-// Reset form
 const resetForm = () => {
   form.slider_title = "";
   form.back_url = "";
@@ -185,64 +188,40 @@ const resetForm = () => {
   validationError.value = null;
   isLoading.value = false;
   buttonName.value = "Save";
+  
+  // Reset file input visually
+  if (fileInputRef.value) {
+    fileInputRef.value.value = "";
+  }
 };
 
-// Show success message (replace with your preferred notification method)
-const showSuccessMessage = (message) => {
-  // Using alert as placeholder - replace with your notification system
-  alert(message.message || "Operation successful");
-};
-
-// Show validation error notification
-const showValidationError = () => {
-  // Replace with your notification system
-  console.error("Validation errors occurred");
-};
-
-// Save handler
 const save = async () => {
   isLoading.value = true;
   buttonName.value = "Saving...";
   validationError.value = null;
 
   try {
-    // Use FormData for file upload
     const formData = new FormData();
     formData.append("slider_title", form.slider_title);
     formData.append("back_url", form.back_url);
     formData.append("description", form.description);
     formData.append("status", form.status);
     
-    // Append file if exists
     if (imageFile.value) {
       formData.append("slider_banner", imageFile.value);
     }
 
-    const response = await axios.post(
-      `${base_url}admin/slider`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+    const response = await axios.post(`${base_url}admin/slider`, formData);
+    // DO NOT SET headers: {"Content-Type": "multipart/form-data"} here!
+    // Axios handles the boundary automatically.
 
     if (response.data.status === "success") {
-      // Close modal (jQuery - assuming Bootstrap is still used)
-      const modal = document.getElementById("modal-form");
-      if (modal) {
-        const bootstrapModal = bootstrap.Modal.getInstance(modal);
-        if (bootstrapModal) {
-          bootstrapModal.hide();
-        }
-      }
-
+      closeModal();
       resetForm();
       emitter.emit("slider-created");
-      showSuccessMessage(response.data);
+      successMessage(response.data);
     } else {
-      showSuccessMessage(response.data);
+      successMessage(response.data);
     }
   } catch (err) {
     if (err.response?.status === 422) {
@@ -250,13 +229,20 @@ const save = async () => {
       showValidationError();
     } else {
       console.error("Error:", err);
-      showSuccessMessage({ message: "Something went wrong" });
+      successMessage(err);
     }
   } finally {
     isLoading.value = false;
     buttonName.value = "Save";
   }
 };
+
+// Clean up object URL to prevent memory leaks
+onBeforeUnmount(() => {
+  if (imagePreview.value) {
+    URL.revokeObjectURL(imagePreview.value);
+  }
+});
 </script>
 
 <style scoped>

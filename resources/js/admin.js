@@ -44,7 +44,7 @@ import CreateCustomerCoupon from './components/admin/offers/customer_coupon/Crea
 import ViewCustomerCoupon from './components/admin/offers/customer_coupon/ViewCustomerCoupon.vue';
 
 import ViewOrder from './components/admin/order/ViewOrder.vue';
-import viewAreaOrder from './components/admin/order/viewAreaOrder.vue';
+import ViewAreaOrder from './components/admin/order/ViewAreaOrder.vue';
 
 import CreateRole from './components/admin/role/CreateRole.vue';
 import ViewRole from './components/admin/role/ViewRole.vue';
@@ -55,11 +55,22 @@ import ViewCurrency from './components/admin/setting/currency/ViewCurrency.vue';
 import SeoSetting from './components/admin/setting/seo/SeoSetting.vue';
 import ShopSetting from './components/admin/setting/shop/ShopSetting.vue';
 import TrialSetting from './components/admin/setting/trial/TrialSetting.vue';
-import ShippingSetting from './components/admin/setting/shipping/shippingSetting.vue';
+import ShippingSetting from './components/admin/setting/shipping/ShippingSetting.vue';
+import ViewPayment from './components/admin/setting/payment/ViewPayment.vue';
+import ViewSocialSetting from  './components/admin/setting/social/ViewSocialSetting.vue';
 // import PwaSetting from './components/admin/setting/pwa/PwaSetting.vue';
 import DeliveryDateSlot from './components/admin/setting/slot/DeliveryDateSlot.vue';
 import CreateTimeSlot from './components/admin/setting/slot/CreateTimeSlot.vue';
 import ViewTimeSlot from './components/admin/setting/slot/ViewTimeSlot.vue';
+import CreatePage from './components/admin/setting/pages/CreatePage.vue';
+import ViewPage from './components/admin/setting/pages/ViewPage.vue';
+import ViewMessenger from './components/admin/setting/messenger/ViewMessenger.vue';
+import EmailSetting from './components/admin/setting/email/EmailSetting.vue';
+import ViewEmail from './components/admin/email/ViewEmail.vue';
+import ShippingArea from './components/admin/setting/shipping/ShippingArea.vue';
+import CreateArea from './components/admin/setting/shipping/CreateArea.vue';
+// import CreateCustomer from './components/admin/customers/CreateCustomer.vue';
+import ViewCustomer from './components/admin/customers/ViewCustomer.vue';
 // Initialize the Vue 3 Application instance
 const app = createApp({});
 
@@ -99,7 +110,7 @@ app.component('create-customer-coupon', CreateCustomerCoupon);
 app.component('view-customer-coupon', ViewCustomerCoupon);
 
 app.component('view-order', ViewOrder);
-app.component('area-order', viewAreaOrder);
+app.component('area-order', ViewAreaOrder);
 
 app.component('create-role', CreateRole);
 app.component('view-role', ViewRole);
@@ -108,12 +119,23 @@ app.component('seo-setting', SeoSetting);
 app.component('shop-setting', ShopSetting);
 app.component('trial-setting', TrialSetting);
 app.component('shipping-setting', ShippingSetting);
+app.component('view-payment', ViewPayment);
 // app.component('pwa-setting', PwaSetting);
 app.component('date-slot-setting', DeliveryDateSlot);
 app.component('create-time-slot', CreateTimeSlot);
 app.component('view-time-slot', ViewTimeSlot);
 app.component('create-currency', CreateCurrency);
 app.component('view-currency', ViewCurrency);
+app.component('view-social-setting', ViewSocialSetting);
+app.component('create-page', CreatePage);
+app.component('view-page', ViewPage);
+app.component('messenger-setting', ViewMessenger);
+app.component('email-setting', EmailSetting);
+app.component('view-email', ViewEmail);
+app.component('shipping-area', ShippingArea);
+app.component('create-area', CreateArea);
+// app.component('create-customer', CreateCustomer);
+app.component('view-customer', ViewCustomer);
 // Inject plugins using the new app.use() chain syntax
 app.use(VueLazyload, {
     loading: base_url + '/images/loading.gif',

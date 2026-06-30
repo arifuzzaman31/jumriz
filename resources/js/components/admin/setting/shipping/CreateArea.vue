@@ -1,5 +1,5 @@
 <template>
-  <div ref="modalRef" id="update-modal" class="modal fade" aria-hidden="true">
+  <div ref="modalRef" id="modal-form" class="modal fade" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header text-right">
@@ -8,7 +8,7 @@
         <div class="modal-body">
           <div class="row">
             <div class="col-sm-12">
-              <h3 class="m-t-none m-b">Update City</h3>
+              <h3 class="m-t-none m-b">Add City</h3>
               <form @submit.prevent="save" role="form">
                 <div class="form-group">
                   <label>City Name *</label>
@@ -24,16 +24,16 @@
                   <label>Status *</label>
                   <div class="switch">
                     <div class="onoffswitch">
-                      <!-- ✅ FIXED: Replaced conflicting :checked with true-value/false-value -->
+                      <!-- ✅ FIXED: Replaced conflicting checked="true" with proper true-value/false-value -->
                       <input
                         type="checkbox"
                         v-model="area.status"
                         :true-value="1"
                         :false-value="0"
                         class="onoffswitch-checkbox"
-                        id="cityname2"
+                        id="cityname"
                       />
-                      <label class="onoffswitch-label" for="cityname2">
+                      <label class="onoffswitch-label" for="cityname">
                         <span class="onoffswitch-inner"></span>
                         <span class="onoffswitch-switch"></span>
                       </label>
@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { emitter, base_url } from '../../../../vue-assets'
 import { useMixin } from '../../../../mixin'
 
@@ -87,28 +87,16 @@ const { successMessage, validationError: showValidationError } = useMixin()
 // --- State ---
 const modalRef = ref(null)
 const isSubmitting = ref(false)
-const buttonName = ref('Update')
+const buttonName = ref('Save')
 const validationError = ref(null)
 
-// Status is a number (0 or 1) to match backend expectations
+// Status is 1 by default to match the old `status: true` intent
 const area = reactive({
-  id: '',
   name: '',
-  status: 0,
+  status: 1,
 })
 
 // --- Methods ---
-const openModal = (value) => {
-  // ✅ No longer need to convert status to boolean, v-model handles it
-  area.id = value.id
-  area.name = value.city // Backend returns the name under 'city'
-  area.status = value.status
-  
-  if (modalRef.value) {
-    $(modalRef.value).modal('show')
-  }
-}
-
 const closeModal = () => {
   if (modalRef.value) {
     $(modalRef.value).modal('hide')
@@ -117,16 +105,15 @@ const closeModal = () => {
 
 const resetForm = () => {
   Object.assign(area, {
-    id: '',
     name: '',
-    status: 0,
+    status: 1,
   })
   validationError.value = null
 }
 
 const save = async () => {
   isSubmitting.value = true
-  buttonName.value = 'Updating...'
+  buttonName.value = 'Saving...'
 
   try {
     const response = await axios.post(
@@ -151,16 +138,7 @@ const save = async () => {
     }
   } finally {
     isSubmitting.value = false
-    buttonName.value = 'Update'
+    buttonName.value = 'Save'
   }
 }
-
-// --- Lifecycle ---
-onMounted(() => {
-  emitter.on('edit-area', openModal)
-})
-
-onUnmounted(() => {
-  emitter.off('edit-area', openModal)
-})
 </script>

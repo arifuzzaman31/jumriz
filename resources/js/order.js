@@ -1,6 +1,6 @@
 require('./vue-assets');
 Vue.component('view-order', require('./components/admin/order/ViewOrder.vue').default);
-Vue.component('area-order', require('./components/admin/order/viewAreaOrder.vue').default);
+Vue.component('area-order', require('./components/admin/order/ViewAreaOrder.vue').default);
 
 import VueLazyload from 'vue-lazyload';
 

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Setting\Email;
 use App\Models\Setting\ShopSetting;
 use App\Models\Subscribe;
-use App\User;
+use App\Models\User;
 use \Mail;
 
 class EmailController extends Controller

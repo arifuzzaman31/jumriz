@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\OTP;
 use App\Models\Setting\ShopSetting;
 use App\Sms\AdnSms;
-use App\User;
+use App\Models\User;
 use Auth;
 use Cart;
 use DB;

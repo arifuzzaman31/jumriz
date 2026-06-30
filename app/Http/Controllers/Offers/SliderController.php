@@ -41,7 +41,7 @@ class SliderController extends Controller
     {
         $request->validate([
             'slider_title'  => 'required',
-            'slider_banner' => 'required|image64:jpeg,png,gif,jpg,webp,bmp',
+            'slider_banner' => 'required|image|mimes:jpeg,png,gif,jpg,webp,bmp',
         ]);
 
         try
@@ -52,14 +52,12 @@ class SliderController extends Controller
             $slider->back_link_url = $request->back_url;
             $slider->status        = $request->status;
 
-            $imageData = $request->get('slider_banner');
+            if ($request->hasFile('slider_banner')) {
+                $file = $request->file('slider_banner');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
 
-            if ($imageData) {
-                $fileName = 'slider_banner' . uniqid() . '.' . explode('/', explode(':', substr($imageData, 0, strpos($imageData, ';')))[1])[1];
-
-                Image::make($request->get('slider_banner'))
-                // ->resizeCanvas(1920, 420, 'center', false, '#E1E1E1')
-                    ->save('images/slider/' . $fileName);
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/slider'), $fileName);
 
                 $slider->slider_image = $fileName;
             }
@@ -116,7 +114,7 @@ class SliderController extends Controller
     {
         $request->validate([
             'slider_title'  => 'required',
-            'slider_banner' => 'nullable|image64:jpeg,png,gif,jpg,webp,bmp',
+            'slider_banner' => 'nullable|image|mimes:jpeg,png,gif,jpg,webp,bmp',
         ]);
 
         try
@@ -127,18 +125,14 @@ class SliderController extends Controller
             $slider->back_link_url = $request->back_url;
             $slider->status        = $request->status;
 
-            $imageData = $request->get('slider_banner');
-            if ($imageData) {
+            if ($request->hasFile('slider_banner')) {
                 if (file_exists('images/slider/' . $slider->slider_image) && !empty($slider->slider_image)) {
                     unlink('images/slider/' . $slider->slider_image);
                 }
-
-                $fileName = 'slider_banner' . uniqid() . '.' . explode('/', explode(':', substr($imageData, 0, strpos($imageData, ';')))[1])[1];
-
-                Image::make($request->get('slider_banner'))
-                // ->resizeCanvas(1920, 420, 'center', false, '#E1E1E1')
-                    ->save('images/slider/' . $fileName);
-
+                $file = $request->file('slider_banner');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+                // Move original file directly to the folder (no resizing)
+                $file->move(public_path('images/slider'), $fileName);
                 $slider->slider_image = $fileName;
             }
 

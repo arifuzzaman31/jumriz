@@ -10,7 +10,7 @@ use App\Models\Setting\ShippingArea;
 use App\Models\Setting\ShopSetting;
 use App\Sms\AdnSms;
 use App\Models\Currency;
-use App\User;
+use App\Models\User;
 use DB,Mail;
 
 class SendCouponController extends Controller

@@ -1,169 +1,219 @@
 <template>
-<div class="animated fadeInRight">
+  <div class="animated fadeInRight">
     <div class="mail-box-header">
-        <h2>
-            Compse mail
-        </h2>
+      <h2>Compose mail</h2>
     </div>
-    <div class="col-md-12" v-if="validation_error" style="margin-top: 20px">
-		<div class="form-group">
+    
+    <div class="col-md-12" v-if="validationError" style="margin-top: 20px">
+      <div class="form-group">
+        <ul>
+          <li 
+            v-for="(error, index) in validationError" 
+            :key="index" 
+            class="text-danger"
+          >
+            {{ error[0] }}
+          </li>
+        </ul>
+      </div>
+    </div>
 
-			<div>
-				<ul>
-					<li class="text-danger" v-for="error in validation_error">{{ error[0] }}</li>
-				</ul>
-			</div>
-
-		</div>
-	</div>
-    <form @submit.prevent="send()">
-    <div class="mail-box">
-    <div class="mail-body">
-        <div class="form-group row"><label class="col-sm-2 col-form-label">To:</label>
+    <form @submit.prevent="send">
+      <div class="mail-box">
+        <div class="mail-body">
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label">To (Users):</label>
             <div class="col-sm-8">
-            	<multiselect v-model="users.selected_email" tag-placeholder="Add this as new email" placeholder="Chose or write email" label="email" track-by="id" :options="emails" :multiple="true" :taggable="true" @tag="addTag"></multiselect>
+              <multiselect 
+                v-model="users.selected_email" 
+                tag-placeholder="Add this as new email" 
+                placeholder="Chose or write email" 
+                label="email" 
+                track-by="id" 
+                :options="emails" 
+                :multiple="true" 
+                :taggable="true" 
+                @tag="addUserTag"
+              ></multiselect>
             </div>
             <div class="col-sm-2 m-auto">
-    			<label> <input type="checkbox" v-model="users.all_user" class="icheckbox_square-green" @change="loadUser()"> All User </label>
-    		</div>
-        </div>
-        <div class="form-group row"><label class="col-sm-2 col-form-label">To:</label>
+              <label> 
+                <input type="checkbox" v-model="users.all_user" class="icheckbox_square-green" @change="loadUser"> All User 
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label">To (Subscribers):</label>
             <div class="col-sm-8">
-            	<multiselect v-model="users.selected_subscriber" tag-placeholder="Add this as new email" placeholder="Chose or write email" label="email" track-by="id" :options="subscriber_email" :multiple="true" :taggable="true" @tag="addTag"></multiselect>
+              <multiselect 
+                v-model="users.selected_subscriber" 
+                tag-placeholder="Add this as new email" 
+                placeholder="Chose or write email" 
+                label="email" 
+                track-by="id" 
+                :options="subscriberEmails" 
+                :multiple="true" 
+                :taggable="true" 
+                @tag="addSubscriberTag"
+              ></multiselect>
             </div>
             <div class="col-sm-2 m-auto">
-    		<label> <input type="checkbox" v-model="users.all_subscriber" class="icheckbox_square-green" @change="loadSubscriber()"> All Subscriber </label>
-    	</div>
-        </div>
-        <div class="form-group row"><label class="col-sm-2 col-form-label">Subject:</label>
-            <div class="col-sm-10"><input type="text" class="form-control" v-model="users.subject"></div>
+              <label> 
+                <input type="checkbox" v-model="users.all_subscriber" class="icheckbox_square-green" @change="loadSubscriber"> All Subscriber 
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Subject:</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" v-model="users.subject">
+            </div>
+          </div>
         </div>
         
-    </div>
-    <div class="col-sm-12">
-    	<vue-editor v-model="users.text_body"></vue-editor>
-    </div>
+        <div class="col-sm-12">
+          <!-- Vue 3 Quill Editor Replacement -->
+          <QuillEditor 
+            v-model:content="users.text_body" 
+            contentType="html" 
+            theme="snow" 
+          />
+        </div>
+
         <div class="mail-body text-right tooltip-demo">
-        	<button class="btn btn-sm btn-primary" title="Send">{{ button_name }}</button>
+          <button 
+            class="btn btn-sm btn-primary" 
+            title="Send" 
+            type="submit"
+            :disabled="isSending"
+          >
+            <i v-if="isSending" class="fa fa-spinner fa-spin"></i>
+            {{ buttonName }}
+          </button>
         </div>
         <div class="clearfix"></div>
-    </div>
-     </form>
-</div>
+      </div>
+    </form>
+  </div>
 </template>
-<script>
-import { EventBus } from  '../../../vue-assets';
-import { useMixin } from  '../../../mixin';
-import { VueEditor } from "vue2-editor";
+
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { base_url } from '../../../vue-assets'
+import { useMixin } from '../../../mixin'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import Multiselect from 'vue-multiselect'
+import 'vue-multiselect/dist/vue-multiselect.css'
+
 const { successMessage, validationError: showValidationError } = useMixin()
 
-export default {
+// --- State ---
+const isSending = ref(false)
+const buttonName = ref('Send')
+const validationError = ref(null)
+const emails = ref([])
+const subscriberEmails = ref([])
 
-	data(){
-		return {
-			users : {
-				selected_email : [],
-				selected_subscriber : [],
-				all_user : false,
-				all_subscriber : false,
-				subject : '',
-				text_body : ''
-			},
-			// url : base_url,
-			isLoading : false,
-			emails : [],
-			subscriber_email : [],
-			button_name: 'Send',
-			validation_error : null,
-		}
-	},
-	mounted(){
-		this.emailList();
-	},
-	components: {
-		Multiselect,
-		VueEditor
-	},
-	methods : {
-		emailList : function() {
-			this.isLoading = true;
-			axios.get(base_url+'admin/setting/get-email')
-        		.then(response => {
-        			if(this.users.all_user != true){
-        				this.emails = response.data.user;
-        			}
-        			if(this.users.all_subscriber != true){
-        				this.subscriber_email = response.data.subscriber;
-        			}
-        			console.log(response.data);
-        			this.isLoading = false;
-        	});
-		},
+const users = reactive({
+  selected_email: [],
+  selected_subscriber: [],
+  all_user: false,
+  all_subscriber: false,
+  subject: '',
+  text_body: ''
+})
 
-		loadSubscriber(){
-			axios.get(base_url+'admin/setting/get-subscriber-email')
-        		.then(response => {
-        		if(this.users.all_subscriber != false){
-        			this.users.selected_subscriber = response.data;
-        		}
-        		else{
-		        	this.users.selected_subscriber = '';
-		        }
-        	});
-		},
-
-		loadUser(){
-			axios.get(base_url+'admin/setting/get-user-email')
-        		.then(response => {
-        		if(this.users.all_user != false){
-        			this.users.selected_email = response.data;
-        		}
-        		else{
-		        	this.users.selected_email = '';
-		        }
-        	});
-	        
-		},
-
-		addTag (newTag) {
-		  const tag = {
-		    email: newTag,
-		    id: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
-		  }
-		  this.emails.push(tag)
-		  this.user.selected_email.push(tag)
-		},
-
-		send(){
-			this.button_name = 'Sending...'
-			axios.post(base_url+'admin/setting/send/email',this.users)
-			.then(response => {
-				console.log(response.data)
-				this.resetForm();
-				this.successMessage(response.data);
-            	this.button_name = "Send";
-			})
-			.catch(error => {
-				if (error.response.status == 422) {
-	                this.validation_error = error.response.data.errors;
-	                this.validationError();
-	                this.button_name = "Send";
-	            } 
-	            else 
-	            {
-	                this.successMessage(error);
-	                this.button_name = "Send";
-	            }
-			});
-		},
-		resetForm(){
-			this.users = {
-				selected_email : [],
-				subject : '',
-				text_body : ''
-			}
-		},
-	},
+// --- Methods ---
+const emailList = async () => {
+  try {
+    const response = await axios.get(`${base_url}admin/setting/get-email`)
+    if (!users.all_user) {
+      emails.value = response.data.user
+    }
+    if (!users.all_subscriber) {
+      subscriberEmails.value = response.data.subscriber
+    }
+  } catch (error) {
+    console.error('Error fetching email lists:', error)
+  }
 }
+
+const loadSubscriber = async () => {
+  try {
+    const response = await axios.get(`${base_url}admin/setting/get-subscriber-email`)
+    users.selected_subscriber = users.all_subscriber ? response.data : []
+  } catch (error) {
+    console.error('Error loading subscribers:', error)
+  }
+}
+
+const loadUser = async () => {
+  try {
+    const response = await axios.get(`${base_url}admin/setting/get-user-email`)
+    users.selected_email = users.all_user ? response.data : []
+  } catch (error) {
+    console.error('Error loading users:', error)
+  }
+}
+
+// ✅ FIXED: Separated tag functions so subscribers don't accidentally get added to users
+const addUserTag = (newTag) => {
+  const tag = {
+    email: newTag,
+    id: newTag.substring(0, 2) + Math.floor(Math.random() * 10000000)
+  }
+  emails.value.push(tag)
+  users.selected_email.push(tag)
+}
+
+const addSubscriberTag = (newTag) => {
+  const tag = {
+    email: newTag,
+    id: newTag.substring(0, 2) + Math.floor(Math.random() * 10000000)
+  }
+  subscriberEmails.value.push(tag)
+  users.selected_subscriber.push(tag)
+}
+
+const send = async () => {
+  isSending.value = true
+  buttonName.value = 'Sending...'
+
+  try {
+    const response = await axios.post(`${base_url}admin/setting/send/email`, users)
+    resetForm()
+    successMessage(response.data)
+  } catch (error) {
+    if (error.response?.status === 422) {
+      validationError.value = error.response.data.errors
+      showValidationError()
+    } else {
+      successMessage(error)
+    }
+  } finally {
+    isSending.value = false
+    buttonName.value = 'Send'
+  }
+}
+
+// ✅ FIXED: Now properly resets ALL form fields, including checkboxes
+const resetForm = () => {
+  Object.assign(users, {
+    selected_email: [],
+    selected_subscriber: [],
+    all_user: false,
+    all_subscriber: false,
+    subject: '',
+    text_body: ''
+  })
+  validationError.value = null
+}
+
+// --- Lifecycle ---
+onMounted(() => {
+  emailList()
+})
 </script>

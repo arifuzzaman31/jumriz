@@ -8,7 +8,7 @@ use App\Models\Product;
 use App\Models\Order\Order;
 use App\Models\Order\OrderDetails;
 use App\Models\Setting\PaymentSetting;
-use App\User;
+use App\Models\User;
 use App\AllStatic;
 use DB,PDF,Session,Excel;
 use App\Imports\ProductsImport;

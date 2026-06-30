@@ -9,7 +9,7 @@ use URL;
 use Session;
 use Redirect;
 use Input;
-use App\User;
+use App\Models\User;
 // use Stripe\Error\Card;
 use Stripe;
 use App\Models\Order\Order;

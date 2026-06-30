@@ -1,184 +1,178 @@
 <template>
-	
-<div id="update-social" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog modal-lg">
-		<div class="modal-content">
-			<div class="modal-header text-right">
-				<button class="btn btn-default" data-dismiss="modal">X</button>
-			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-sm-8 mr-auto ml-auto"><h3 class="m-t-none m-b">Update {{ social.provider }} Login Credential</h3>
-						<form @submit.prevent="save()" role="form">
-							<div class="form-group">
-								<label>Provider Name *</label> 
-								<input v-model="social.provider" type="text" placeholder="Provider Name" disabled="" class="form-control">
-							</div>								
+  <div ref="modalRef" id="update-social" class="modal fade" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header text-right">
+          <button class="btn btn-default" data-dismiss="modal">X</button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-sm-8 mr-auto ml-auto">
+              <h3 class="m-t-none m-b">Update {{ social.provider }} Login Credential</h3>
+              <form @submit.prevent="save" role="form">
+                <div class="form-group">
+                  <label>Provider Name *</label>
+                  <input
+                    v-model="social.provider"
+                    type="text"
+                    placeholder="Provider Name"
+                    disabled
+                    class="form-control"
+                  />
+                </div>
 
-							<div class="form-group">
-								<label>Client Id / app_id *</label> 
-								<input v-model="social.app_id" type="text" placeholder="App Key" class="form-control">
-							</div>									
+                <div class="form-group">
+                  <label>Client Id / app_id *</label>
+                  <input
+                    v-model="social.app_id"
+                    type="text"
+                    placeholder="App Key"
+                    class="form-control"
+                  />
+                </div>
 
-							<div class="form-group">
-								<label>Secret *</label> 
-								<input v-model="social.app_secret" type="text" placeholder="App Secret" class="form-control">
-							</div>								
+                <div class="form-group">
+                  <label>Secret *</label>
+                  <input
+                    v-model="social.app_secret"
+                    type="text"
+                    placeholder="App Secret"
+                    class="form-control"
+                  />
+                </div>
 
-							<div class="form-group">
-								<label>Status *</label> 
-								<select class="form-control" v-model="social.status">
-									<option value="0">Inactive</option>
-									<option value="1">Active</option>
-								</select>
-							</div>								
+                <div class="form-group">
+                  <label>Status *</label>
+                  <select class="form-control" v-model="social.status">
+                    <option value="0">Inactive</option>
+                    <option value="1">Active</option>
+                  </select>
+                </div>
 
-								
-							<div style="margin-bottom: 20px;">
-								<button  class="btn btn-lg  btn-primary float-right " type="submit"><strong>{{ button_name }}</strong></button>
-							</div>
-						</form>
-					</div>
-					<div class="col-md-8 mr-auto ml-auto" v-if="validation_error" style="margin-top: 20px">
-						<div class="form-group">
-							<div >
-								<ul>
-									<li class="text-danger" v-for="error in validation_error">{{ error[0] }}</li>
-								</ul>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
+                <div style="margin-bottom: 20px">
+                  <button
+                    class="btn btn-lg btn-primary float-right"
+                    type="submit"
+                    :disabled="isSubmitting"
+                  >
+                    <strong>{{ buttonName }}</strong>
+                  </button>
+                </div>
+              </form>
+            </div>
 
+            <div
+              v-if="validationErrors"
+              class="col-md-8 mr-auto ml-auto"
+              style="margin-top: 20px"
+            >
+              <div class="form-group">
+                <ul>
+                  <li
+                    v-for="(error, index) in validationErrors"
+                    :key="index"
+                    class="text-danger"
+                  >
+                    {{ error[0] }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
+<script setup>
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { emitter, base_url } from '../../../../vue-assets'
+import { useMixin } from '../../../../mixin'
 
-<script>
-	
-	import { EventBus } from  '../../../../vue-assets';
+const { successMessage, validationError: showValidationError } = useMixin()
 
-	import { useMixin } from  '../../../../mixin';
+// --- State ---
+const modalRef = ref(null)
+const isSubmitting = ref(false)
+const buttonName = ref('Update')
+const validationErrors = ref(null)
 
-	export default {
+const social = reactive({
+  id: '',
+  provider: '',
+  app_id: '',
+  app_secret: '',
+  status: 1,
+})
 
-		mixins : [Mixin],
+// --- Methods ---
+const closeModal = () => {
+  // jQuery for Bootstrap 3/4
+  $(modalRef.value).modal('hide')
+  
+  // Uncomment below if using Bootstrap 5
+  // const modal = bootstrap.Modal.getInstance(modalRef.value)
+  // modal?.hide()
+}
 
-		data(){
+const resetForm = () => {
+  Object.assign(social, {
+    id: '',
+    provider: '',
+    app_id: '',
+    app_secret: '',
+    status: 1,
+  })
+  validationErrors.value = null
+}
 
-			return {
+const openModal = (value) => {
+  Object.assign(social, value)
+  // jQuery for Bootstrap 3/4
+  $(modalRef.value).modal('show')
+  
+  // Uncomment below if using Bootstrap 5
+  // new bootstrap.Modal(modalRef.value).show()
+}
 
-				social : {
+const save = async () => {
+  buttonName.value = 'Updating...'
+  isSubmitting.value = true
 
-					'id' : '',  
-					'provider' : '',  
-					'app_id' : '',  
-					'app_secret' : '',  
-					'status' : 1,
+  try {
+    const response = await axios.post(
+      `${base_url}admin/setting/social-creadential/update/${social.id}`,
+      social
+    )
 
-				},
+    if (response.data.status === 'success') {
+      closeModal()
+      resetForm()
+      successMessage(response.data)
+      emitter.emit('social-created')
+    } else {
+      successMessage(response.data)
+    }
+  } catch (err) {
+    if (err.response?.status === 422) {
+      validationErrors.value = err.response.data.errors
+      showValidationError()
+    } else {
+      successMessage(err)
+    }
+  } finally {
+    buttonName.value = 'Update'
+    isSubmitting.value = false
+  }
+}
 
-				button_name : "Update",
-				validation_error : null, 
+// --- Lifecycle ---
+onMounted(() => {
+  emitter.on('update-social', openModal)
+})
 
-			}
-
-		},
-
-		mounted(){
-
-          // this not work in event bus 
-
-          var _this = this;
-
-          EventBus.$on('update-social',function(value) {
-          _this.social = value;
-          $('#update-social').modal('show');
-
-
-          });
-
-
-
-		},
-
-
-		methods : {
-			save(){
-
-             this.button_name = "Updating...";
-
-                 
-             axios.post(base_url+'admin/setting/social-creadential/update/'+this.social.id,this.social)
-                .then(response => {
-
-                    if(response.data.status === 'success'){
-
-
-                    $('#update-social').modal('hide');
-
-                    this.resetForm();
-                    this.successMessage(response.data);
-                    EventBus.$emit('social-created');
-
-                    this.button_name = "Update";
-
-
-					}
-				   else
-				    {
-					  this.successMessage(response.data);	
-					  this.button_name = "Update";
-					}						
-
-                    
-                })
-                .catch(err => {
-
-                 if (err.response.status == 422) {
-
-                    this.validation_error = err.response.data.errors;
-
-                    this.validationError();
-
-                    this.button_name = "Update";
-                } 
-                else 
-                {
-
-                    this.successMessage(err);
-
-                    this.isloading = false;
-
-                    this.button_name = "Update";
-                }
-             })
-
-         },
-
-         resetForm(){
-          
-          this.social = {
-
-					'id' : '',  
-					'provider' : '',  
-					'app_id' : '',  
-					'app_secret' : '',  
-					'status' : 1,   
-
-				}
-
-		  this.validation_error = null;		
-
-         }
-
-
-
-     }
-
- }
-
+onUnmounted(() => {
+  emitter.off('update-social', openModal)
+})
 </script>

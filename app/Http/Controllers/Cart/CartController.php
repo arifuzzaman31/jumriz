@@ -12,7 +12,7 @@ use App\Models\Order\TrialProduct;
 use App\Models\Product;
 use App\Models\Setting\PaymentSetting;
 use App\Models\Setting\ShippingCost;
-use App\User;
+use App\Models\User;
 use Auth;
 use Cart;
 use DB;

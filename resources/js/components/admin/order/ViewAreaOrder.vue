@@ -93,40 +93,40 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="value in orders.data" :key="value.id">
-                  <td>{{ value.id }}</td>
-                  <td>{{ formatDate(value.order_date) }}</td>
-                  <td>{{ value.user?.name || 'N/A' }}</td>
-                  <td>{{ value.shipping_area?.city || 'N/A' }}</td>
-                  <td>{{ value.total_item }}</td>
+                <tr v-for="order in orders.data" :key="order.id">
+                  <td>{{ order.id }}</td>
+                  <td>{{ formatDate(order.order_date) }}</td>
+                  <td>{{ order.user?.name || 'N/A' }}</td>
+                  <td>{{ order.shipping_area?.city || 'N/A' }}</td>
+                  <td>{{ order.total_item }}</td>
                   <td>
-                    {{ currency?.symbol || '' }}{{ value.total_amount }}
+                    {{ currency?.symbol || '' }}{{ order.total_amount }}
                   </td>
                   <td>
-                    <span v-if="value.payment_status == 0" class="text-danger">Unpaid</span>
+                    <span v-if="order.payment_status === 0" class="text-danger">Unpaid</span>
                     <span v-else class="text-success">Paid</span>
                   </td>
                   <td>
-                    <span v-if="value.status == 0" class="text-warning">Pending</span>
-                    <span v-else-if="value.status == 1" class="text-info">Processing</span>
-                    <span v-else-if="value.status == 2" class="text-primary">On delivery</span>
+                    <span v-if="order.status === 0" class="text-warning">Pending</span>
+                    <span v-else-if="order.status === 1" class="text-info">Processing</span>
+                    <span v-else-if="order.status === 2" class="text-primary">On delivery</span>
                     <span v-else class="text-success">Delivered</span>
                   </td>
                   <td>
-                    <a
-                      @click.prevent="getDetails(value.id)"
+                    <button
+                      @click="getDetails(order.id)"
                       class="btn btn-primary btn-sm"
-                      href="#"
+                      type="button"
                     >
                       <i class="fa fa-eye" title="View Details"></i>
-                    </a>
-                    <a
-                      @click.prevent="deleteOrder(value.id)"
+                    </button>
+                    <button
+                      @click="deleteOrder(order.id)"
                       class="btn btn-danger btn-sm"
-                      href="#"
+                      type="button"
                     >
                       <i class="fa fa-trash" title="Delete"></i>
-                    </a>
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -134,7 +134,7 @@
 
             <!-- Empty State -->
             <div
-              v-if="orders.data && orders.data.length === 0"
+              v-if="!orders.data || orders.data.length === 0"
               class="text-center text-muted py-3"
             >
               No orders found for this area.
@@ -142,7 +142,7 @@
           </div>
 
           <div class="col-md-12 text-center" v-else>
-            <img :src="`${base_url}/images/loading.gif`" alt="Loading..." />
+            <img :src="`${base_url}images/loading.gif`" alt="Loading..." />
           </div>
         </div>
       </div>
@@ -159,14 +159,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import axios from "axios";
-import Swal from "sweetalert2";
-import { emitter } from "../../../vue-assets"; // Update path as needed
-import Pagination from "../pagination/Pagination.vue";
-import OrderDetails from "./OrderDetails.vue";
+import { ref, onMounted, onUnmounted } from "vue"
+import axios from "axios"
+import Swal from "sweetalert2"
+import { emitter, base_url } from "../../../vue-assets" // Ensured base_url is imported
+import Pagination from "../pagination/Pagination.vue"
+import OrderDetails from "./OrderDetails.vue"
 
-// Props
+// --- Props ---
 const props = defineProps({
   currency: {
     type: Object,
@@ -176,29 +176,29 @@ const props = defineProps({
     type: [String, Number],
     default: "",
   },
-});
+})
 
-// Reactive State
-const orders = ref([]);
-const paymentStatus = ref("");
-const status = ref("");
-const orderId = ref("");
-const isLoading = ref(false);
+// --- Reactive State ---
+const orders = ref([])
+const paymentStatus = ref("")
+const status = ref("")
+const orderId = ref("")
+const isLoading = ref(false)
 
-// Date formatting (Replaces Vue 2 | dateToString filter)
+// --- Methods ---
+
+// Replaces Vue 2 | dateToString filter
 const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
+  if (!dateString) return "N/A"
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
-  });
-};
+  })
+}
 
-// Fetch area orders
 const getAreaOrder = async (page = 1) => {
-  isLoading.value = true;
-
+  isLoading.value = true
   try {
     const response = await axios.get(`${base_url}admin/order-list`, {
       params: {
@@ -206,37 +206,32 @@ const getAreaOrder = async (page = 1) => {
         order_id: orderId.value,
         status: status.value,
         payment: paymentStatus.value,
-        city: props.cityid, // Use prop directly instead of this.cityid
+        city: props.cityid,
       },
-    });
-    
-    orders.value = response.data;
+    })
+    orders.value = response.data
   } catch (error) {
-    console.error("Error fetching area orders:", error);
+    console.error("Error fetching area orders:", error)
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
-// Handle pagination click
 const pageClicked = (pageNo) => {
-  getAreaOrder(pageNo);
-};
+  getAreaOrder(pageNo)
+}
 
-// Emit event to view details
 const getDetails = (id) => {
-  emitter.emit("order-details", id);
-};
+  emitter.emit("order-details", id)
+}
 
-// Clear all filters
 const clearFilter = () => {
-  orderId.value = "";
-  status.value = "";
-  paymentStatus.value = "";
-  getAreaOrder();
-};
+  orderId.value = ""
+  status.value = ""
+  paymentStatus.value = ""
+  getAreaOrder()
+}
 
-// Delete order
 const deleteOrder = async (id) => {
   try {
     const result = await Swal.fire({
@@ -247,38 +242,33 @@ const deleteOrder = async (id) => {
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
       confirmButtonText: "Yes, delete it!",
-    });
+    })
 
     if (result.isConfirmed) {
-      const res = await axios.get(`${base_url}admin/order/delete/${id}`);
+      const res = await axios.get(`${base_url}admin/order/delete/${id}`)
       
       Swal.fire({
         icon: "success",
         title: res.data.message || "Deleted successfully!",
         timer: 1500,
         showConfirmButton: false,
-      });
+      })
       
-      getAreaOrder();
+      getAreaOrder()
     }
   } catch (error) {
-    console.error("Error deleting order:", error);
-    Swal.fire("Error!", "Something went wrong.", "error");
+    console.error("Error deleting order:", error)
+    Swal.fire("Error!", "Something went wrong.", "error")
   }
-};
+}
 
-// Refresh data handler for event bus
-const refreshData = () => {
-  getAreaOrder();
-};
-
-// Lifecycle hooks
+// --- Lifecycle ---
 onMounted(() => {
-  getAreaOrder();
-  emitter.on("order-created", refreshData);
-});
+  getAreaOrder()
+  emitter.on("order-created", getAreaOrder)
+})
 
-onBeforeUnmount(() => {
-  emitter.off("order-created", refreshData);
-});
+onUnmounted(() => {
+  emitter.off("order-created", getAreaOrder)
+})
 </script>

@@ -9,7 +9,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderDetails;
 use App\Models\Order\TrialProduct;
 use App\Models\Setting\ShopSetting;
-use App\User;
+use App\Models\User;
 use Auth;
 use Hash;
 use Illuminate\Http\Request;

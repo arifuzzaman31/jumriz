@@ -349,8 +349,11 @@
 
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { EventBus, base_url } from "../../../vue-assets";
+import { emitter, base_url } from "../../../vue-assets"; // ✅ Changed EventBus to emitter
 import { useMixin } from "../../../mixin";
+
+// ✅ FIX: Actually call the composable to extract the methods
+const { successMessage, validationError: showValidationError } = useMixin();
 
 // ✅ Vue 3 Quill Editor
 import { QuillEditor } from '@vueup/vue-quill'
@@ -369,19 +372,10 @@ const getJQuery = () => window.jQuery || window.$;
 
 const showBootstrapModal = (selector) => {
   const jq = getJQuery();
-  if (!jq) {
-    console.error('jQuery not available');
-    return;
-  }
+  if (!jq) return;
   const $el = jq(selector);
-  if (!$el.length) {
-    console.error('Modal element not found:', selector);
-    return;
-  }
-  if (typeof $el.modal === 'function') {
+  if ($el.length && typeof $el.modal === 'function') {
     $el.modal('show');
-  } else {
-    console.error('Bootstrap modal plugin not available on jQuery');
   }
 };
 
@@ -412,8 +406,8 @@ const isBrandLoading = ref(false);
 
 const formData = ref(new FormData());
 
-const featureImageFile = ref(null);          // stores the actual File
-const featureImagePreview = ref('');         // for preview (object URL)
+const featureImageFile = ref(null);          
+const featureImagePreview = ref('');        
 
 const getDefaultProduct = () => ({
   product_name: "",
@@ -454,11 +448,8 @@ const onImageChange = (e) => {
     return;
   }
   const file = files[0];
-  
-  // ✅ Store the ACTUAL file object (not base64)
   featureImageFile.value = file; 
 
-  // Generate a temporary URL just for the preview on the screen
   if (featureImagePreview.value) {
     URL.revokeObjectURL(featureImagePreview.value);
   }
@@ -479,7 +470,7 @@ const removeAttachment = (attachment) => {
 };
 
 const prepareFields = () => {
-  formData.value = new FormData(); // Reset completely each time
+  formData.value = new FormData(); 
   
   if (product.attachments.length > 0) {
     for (var i = 0; i < product.attachments.length; i++) {
@@ -524,25 +515,25 @@ const save = async () => {
   prepareFields();
 
   try {
-    const response = await axios.post(`${base_url}admin/product`, formData.value, {
-      headers: { "Content-Type": "multipart/form-data" }
-    });
+    // ✅ FIX: REMOVED headers! Axios sets the multipart boundary automatically. 
+    // If you set it manually, Laravel will reject the files.
+    const response = await axios.post(`${base_url}admin/product`, formData.value);
 
     if (response.data.status === "success") {
       hideBootstrapModal('#modal-form');
       resetForm();
-      Mixin.methods.successMessage(response.data);
-      EventBus.$emit("product-created");
+      successMessage(response.data); // ✅ FIX: Replaced Mixin.methods.successMessage
+      emitter.emit("product-created"); // ✅ FIX: Replaced EventBus.$emit
     } else {
-      Mixin.methods.successMessage(response.data);
+      successMessage(response.data); // ✅ FIX
     }
     buttonName.value = "Save";
   } catch (err) {
     if (err.response?.status === 422) {
       validationError.value = err.response.data.errors;
-      Mixin.methods.validationError?.();
+      showValidationError(); // ✅ FIX: Replaced Mixin.methods.validationError
     } else {
-      Mixin.methods.successMessage(err);
+      successMessage(err); // ✅ FIX
     }
     buttonName.value = "Save";
   } finally {
@@ -554,7 +545,6 @@ const save = async () => {
 const getSubCategories = () => {
   product.sub_category = ""; product.sub_sub_category = ""; product.brand = ""; product.size = [];
   subCategoriesList.value = []; subSubCategoriesList.value = []; brandsList.value = []; sizes.value = [];
-  // console.log(product.category)
   if (product.category?.id) {
     isCategoryLoading.value = true;
     axios.get(`${base_url}admin/get-subcategory/${product.category.id}`).then(res => { subCategoriesList.value = res.data.data; isCategoryLoading.value = false; });
@@ -594,7 +584,7 @@ const colorModal = () => { showBootstrapModal('#modal-color'); };
 const addColor = async () => {
   const code = colorForm.color_code.trim();
   if (!code.startsWith('#') || code.length !== 7) {
-    Mixin.methods.successMessage({ status: "error", message: "Enter a valid Color Code!" });
+    successMessage({ status: "error", message: "Enter a valid Color Code!" }); // ✅ FIX
     return;
   }
   try {
@@ -606,9 +596,9 @@ const addColor = async () => {
   } catch (err) {
     if (err.response?.status === 422) {
       validationError.value = err.response.data.errors;
-      Mixin.methods.validationError?.();
+      showValidationError(); // ✅ FIX
     } else {
-      Mixin.methods.successMessage(err);
+      successMessage(err); // ✅ FIX
     }
   }
 };
@@ -623,14 +613,12 @@ const resetForm = () => {
   brandsList.value = [];
   tags.value = [];
   
-  // Clear image preview
   if (featureImagePreview.value) {
     URL.revokeObjectURL(featureImagePreview.value);
     featureImagePreview.value = '';
   }
   featureImageFile.value = null;
   
-  // Clear file input elements
   const imageInput = document.querySelector('#modal-form input[type="file"]');
   if (imageInput) imageInput.value = '';
   const attachmentInput = document.getElementById('attachments');
@@ -638,7 +626,6 @@ const resetForm = () => {
 };
 
 const handleCreateProduct = (payload) => {
-  console.log('handleCreateProduct called - event received', { payload });
   resetForm();
   nextTick(() => {
     showBootstrapModal('#modal-form');
@@ -647,14 +634,11 @@ const handleCreateProduct = (payload) => {
 
 // ✅ Lifecycle Hooks
 onMounted(() => {
-  console.log('CreateProduct mounted - registering create-product listener');
   getColors();
 
-  // Listen for the event from ViewProduct
-  EventBus.$on('create-product', handleCreateProduct);
-  console.log('create-product listener registered');
+  // ✅ FIX: Replaced EventBus.$on
+  emitter.on('create-product', handleCreateProduct);
 
-  // Reset form cleanly when bootstrap modal is fully hidden
   const jq = getJQuery();
   if (jq) {
     jq('#modal-form').on('hidden.bs.modal', resetForm);
@@ -662,27 +646,14 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  EventBus.$off('create-product', handleCreateProduct);
+  // ✅ FIX: Replaced EventBus.$off
+  emitter.off('create-product', handleCreateProduct);
 
-  // Clean up jQuery listener to prevent memory leaks
   const jq = getJQuery();
   if (jq) {
     jq('#modal-form').off('hidden.bs.modal', resetForm);
   }
 });
-
-// onBeforeUnmount(() => {
-//   const modalEl = document.getElementById('modal-form');
-//   if (modalEl) modalEl.removeEventListener('show.bs.modal', resetForm);
-// });
-
-// onBeforeUnmount(() => {
-//   // ✅ Clean up event listener to prevent memory leaks
-//   if (typeof $ !== 'undefined') {
-//     $('#modal-form').off('hidden.bs.modal', resetForm);
-//   }
-//   EventBus.$off('create-product', handleCreateProduct);
-// });
 </script>
 
 <style scoped>
