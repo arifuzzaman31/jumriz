@@ -86,7 +86,7 @@
 </template>
 
 <script>
-  import { useCartStore, storeToRefs } from '../../../../store/index';
+  import { useCartStore, storeToRefs } from '../../../store/index.js';
 
   export default {
     mixins : [Mixin],

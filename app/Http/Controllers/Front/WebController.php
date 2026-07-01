@@ -13,6 +13,7 @@ use App\Http\Resources\Product\SubSubCategoryResource;
 use App\Models\Brand;
 use App\Models\Campaign;
 use App\Models\Category;
+use App\Models\HomeSlider;
 use App\Models\Product;
 use App\Models\Setting\PageSetting;
 use App\Models\SubCategory;
@@ -93,6 +94,12 @@ class WebController extends Controller
 
         return CampaignResource::collection($campaign);
 
+    }
+
+    public function homeSliders()
+    {
+        $sliders = HomeSlider::where('status', 1)->get();
+        return \App\Http\Resources\Setting\HomeSliderResource::collection($sliders);
     }
 
     public function productList(Request $request)

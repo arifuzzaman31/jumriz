@@ -1,4 +1,4 @@
-      <template>
+<template>
   <div class="container">
     <div class="row">
       <div class="col-md-12 offers">
@@ -9,22 +9,17 @@
     </div>
 
     <div class="row" v-if="!isLoading">
-      <carousel
-        :class="'offers col-md-12'"
-        :perPageCustom="[
-          [0, 2],
-          [580, 3],
-          [1200, 4],
-          [1500, 5],
-        ]"
-        :autoplay="true"
-        :autoplayHoverPause="true"
-        :autoplayTimeout="2000"
+      <Carousel
+        :items-to-show="2.5"
+        :autoplay="2000"
+        :wrap-around="true"
+        :breakpoints="breakpoints"
+        class="offers col-md-12"
       >
-        <slide
-          :class="'col-12 custom_class'"
+        <Slide
           v-for="value in hotProducts"
           :key="value.id"
+          class="col-12 custom_class"
         >
           <single-product
             class="hot_deal_offers"
@@ -32,8 +27,8 @@
             :product="value"
           >
           </single-product>
-        </slide>
-      </carousel>
+        </Slide>
+      </Carousel>
     </div>
     <div class="row" v-else>
       <div class="col-md-12 text-center">
@@ -42,54 +37,57 @@
     </div>
   </div>
 </template>
+      
+<script setup>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import SingleProduct from "./SingleProduct.vue";
+import { Carousel, Slide } from "vue3-carousel";
+import 'vue3-carousel/dist/carousel.css';
 
-      <script>
-import { EventBus } from "../../../vue-assets";
-import { useMixin } from "../../../mixin";
-import SingleProduct from "./SingleProduct";
-import { Carousel, Slide } from "vue-carousel";
+// --- Props ---
+defineProps({
+  currency: {
+    type: Object,
+    required: true
+  }
+});
 
-export default {
-  props: ["currency"],
-  mixins: [Mixin],
-  components: {
-    "single-product": SingleProduct,
-    Carousel,
-    Slide,
-  },
-  data() {
-    return {
-      hotProducts: [],
-      url: base_url,
-      page: 1,
-      lastPage: 0,
-      isLoading: false,
-    };
-  },
+// --- State ---
+const hotProducts = ref([]);
+const isLoading = ref(false);
+const url = window.base_url; // Accessing global variable
 
-  mounted() {
-    this.getDeals();
-  },
-
-  methods: {
-    fetchProduct: function () {
-      // will pull last 20 hod deal item
-      return axios.get(
-        base_url + "product-list?no_paginate=yes&hot_deal=1&take_only=20"
-      );
-    },
-
-    getDeals() {
-      this.isLoading = true;
-      this.fetchProduct()
-        .then((response) => {
-          this.hotProducts = response.data.data;
-          this.isLoading = false;
-        })
-        .catch((e) => console.log(e));
-    },
-  },
+// --- Carousel Breakpoints ---
+const breakpoints = {
+  0: { itemsToShow: 2 },
+  580: { itemsToShow: 3 },
+  1200: { itemsToShow: 4 },
+  1500: { itemsToShow: 5 },
 };
+
+// --- Methods ---
+const fetchProduct = () => {
+  // will pull last 20 hot deal items
+  return axios.get(`${url}product-list?no_paginate=yes&hot_deal=1&take_only=20`);
+};
+
+const getDeals = async () => {
+  isLoading.value = true;
+  try {
+    const response = await fetchProduct();
+    hotProducts.value = response.data.data;
+  } catch (e) {
+    console.error("Error fetching hot deals:", e);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// --- Lifecycle ---
+onMounted(() => {
+  getDeals();
+});
 </script>
 
 <style>
@@ -105,4 +103,3 @@ export default {
     outline: inherit !important;
 }
 </style>
-

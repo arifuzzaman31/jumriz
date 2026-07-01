@@ -45,7 +45,7 @@
 <script>
 import { EventBus } from "../../../vue-assets";
 import { useMixin } from "../../../mixin";
-import SingleProduct from "../product/SingleProduct";
+import SingleProduct from "../product/SingleProduct.vue";
 
 export default {
   props: ["campaignid", "currency"],

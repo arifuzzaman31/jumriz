@@ -25,15 +25,18 @@
         </single-product>
       </div>
 
-      <infinite-loading spinner="bubbles" @infinite="infiniteHandler">
-        <div slot="spinner">
+      <InfiniteLoading
+        spinner="bubbles"
+        @infinite="infiniteHandler"
+      >
+        <template #spinner>
           <div class="col-md-12 text-center">
             <img :src="url + 'images/loading.gif'" />
           </div>
-        </div>
-        <div slot="no-more"></div>
-        <div slot="no-results"></div>
-      </infinite-loading>
+        </template>
+        <template #no-more><span></span></template>
+        <template #no-results><span></span></template>
+      </InfiniteLoading>
     </div>
 
     <div class="row" v-if="isLoading">
@@ -63,8 +66,8 @@
 <script>
 import { EventBus } from "../../../vue-assets";
 import { useMixin } from "../../../mixin";
-import SingleProduct from "./SingleProduct";
-import InfiniteLoading from "vue-infinite-loading";
+import SingleProduct from "./SingleProduct.vue";
+import InfiniteLoading from "v3-infinite-loading";
 
 export default {
   props: ["currency", "sub_category", "brands"],

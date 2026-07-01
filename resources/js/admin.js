@@ -1,6 +1,5 @@
 import { base_url } from './vue-assets';
 import { createApp } from 'vue';
-import { createPinia } from 'pinia';
 import VueLazyload from 'vue3-lazyload';
 
 import CreateColor from './components/admin/product/color/CreateColor.vue';
@@ -71,11 +70,13 @@ import ShippingArea from './components/admin/setting/shipping/ShippingArea.vue';
 import CreateArea from './components/admin/setting/shipping/CreateArea.vue';
 // import CreateCustomer from './components/admin/customers/CreateCustomer.vue';
 import ViewCustomer from './components/admin/customers/ViewCustomer.vue';
+
+import ViewStockReport from './components/admin/report/ViewStockReport.vue';
+import ViewSalesReport from './components/admin/report/ViewSalesReport.vue';
+import ViewInvoiceReport from './components/admin/report/ViewInvoiceReport.vue';
+import ViewAccountReport from './components/admin/report/ViewAccountReport.vue';
 // Initialize the Vue 3 Application instance
 const app = createApp({});
-
-// Initialize Pinia
-app.use(createPinia());
 
 // Register Global Components on the instance
 app.component('create-color', CreateColor);
@@ -136,6 +137,11 @@ app.component('shipping-area', ShippingArea);
 app.component('create-area', CreateArea);
 // app.component('create-customer', CreateCustomer);
 app.component('view-customer', ViewCustomer);
+
+app.component('view-stockreport', ViewStockReport);
+app.component('view-salesreport', ViewSalesReport);
+app.component('view-invoicereport', ViewInvoiceReport);
+app.component('view-accountreport', ViewAccountReport);
 // Inject plugins using the new app.use() chain syntax
 app.use(VueLazyload, {
     loading: base_url + '/images/loading.gif',

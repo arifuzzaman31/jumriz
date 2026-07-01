@@ -113,7 +113,7 @@
 
   @endif
   <!-- google analytics  -->
-  @vite(['resources/css/app.css', 'resources/js/app.js'])
+  @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/front.js'])
 </head>
 
 <body id="app_body">
@@ -236,6 +236,7 @@
   <script src="{{ asset('assets/js/magnific.js') }}"></script>
   <!--main js-->
   <script src="{{ asset('assets/js/main.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
   @stack('script')
@@ -261,37 +262,37 @@
 
       // $('.sidebar').addClass('active');
 
-      if (sessionStorage.getItem('advertOnce') !== 'true') {
-        setTimeout(() => myGreeting(), 3000);
-      }
+      // if (sessionStorage.getItem('advertOnce') !== 'true') {
+      //   setTimeout(() => myGreeting(), 3000);
+      // }
 
-      function myGreeting() {
-        const swalWithBootstrapButtons = Swal.mixin({
-          customClass: {
-            confirmButton: 'btn btn-success',
-            cancelButton: 'btn btn-danger'
-          },
-          buttonsStyling: false
-        })
+      // function myGreeting() {
+      //   const swalWithBootstrapButtons = Swal.mixin({
+      //     customClass: {
+      //       confirmButton: 'btn btn-success',
+      //       cancelButton: 'btn btn-danger'
+      //     },
+      //     buttonsStyling: false
+      //   })
 
-        swalWithBootstrapButtons.fire({
-          title: 'Are you 21 or older?',
-          text: "Please Verify Your Age!",
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'Yes, Im!',
-          cancelButtonText: 'No, Im Not!',
-          reverseButtons: true
-        }).then((result) => {
-          if (result.isConfirmed) {
-            sessionStorage.setItem('advertOnce', 'true');
-          } else {
-            sessionStorage.setItem('advertOnce', '');
-            window.close();
-            window.open("", "_black");
-          }
-        })
-      }
+      //   swalWithBootstrapButtons.fire({
+      //     title: 'Are you 21 or older?',
+      //     text: "Please Verify Your Age!",
+      //     icon: 'question',
+      //     showCancelButton: true,
+      //     confirmButtonText: 'Yes, Im!',
+      //     cancelButtonText: 'No, Im Not!',
+      //     reverseButtons: true
+      //   }).then((result) => {
+      //     if (result.isConfirmed) {
+      //       sessionStorage.setItem('advertOnce', 'true');
+      //     } else {
+      //       sessionStorage.setItem('advertOnce', '');
+      //       window.close();
+      //       window.open("", "_black");
+      //     }
+      //   })
+      // }
 
     })
   </script>

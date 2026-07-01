@@ -36,15 +36,15 @@
               </p>
               <p>
                 <span class="text-muted">Order Placed: </span>
-                {{ order.order_date | dateToString }}
+                {{ formatDate(order.order_date) }}
               </p>
               <p v-if="order.customer_delivery_date">
                 <span class="text-muted">Expected Delivery Slot: </span>
-                {{ order.customer_delivery_date | dateToString }} ({{ order.customer_delivery_time }})
+                {{ formatDate(order.customer_delivery_date) }} ({{ order.customer_delivery_time }})
               </p>
               <p v-if="order.status == 3">
                 <span class="text-muted">Delivery Date: </span>
-                {{ order.delivery_date | dateToString }}
+                {{ formatDate(order.delivery_date) }}
               </p>
             </div>
           </div>
@@ -89,16 +89,16 @@
                       </td>
                       <td>{{ value.quantity }}</td>
                       <td>
-                        {{ currency.symbol }} {{ value.selling_price | formatPrice }}
+                        {{ currency.symbol }} {{ formatPrice(value.selling_price) }}
                         <span
                           v-if="Number(value.unit_discount) > 0"
                           class="discount-price"
                         >
-                          {{ currency.symbol }} {{ (Number(value.selling_price) + Number(value.unit_discount)) | formatPrice }}
+                          {{ currency.symbol }} {{ formatPrice(Number(value.selling_price || 0) + Number(value.unit_discount || 0)) }}
                         </span>
                       </td>
                       <td>
-                        {{ currency.symbol }} {{ value.total_selling_price | formatPrice }}
+                        {{ currency.symbol }} {{ formatPrice(value.total_selling_price) }}
                       </td>
                     </tr>
 
@@ -109,7 +109,7 @@
                       <td class="no-line"></td>
                       <td class="no-line"><strong>Subtotal</strong></td>
                       <td class="no-line">
-                        {{ currency.symbol }} {{ order.total_amount | formatPrice }}
+                        {{ currency.symbol }} {{ formatPrice(order.total_amount) }}
                       </td>
                     </tr>
                     <tr>
@@ -118,7 +118,7 @@
                       <td class="no-line"></td>
                       <td class="no-line"><strong>Shipping</strong></td>
                       <td class="no-line">
-                        {{ currency.symbol }} {{ order.shipping_amount | formatPrice }}
+                        {{ currency.symbol }} {{ formatPrice(order.shipping_amount) }}
                       </td>
                     </tr>
                     
@@ -131,7 +131,7 @@
                         <strong>Discount ({{ order.coupon }})</strong>
                       </td>
                       <td class="no-line">
-                        - {{ currency.symbol }} {{ order.coupon_discount | formatPrice }}
+                        - {{ currency.symbol }} {{ formatPrice(order.coupon_discount) }}
                       </td>
                     </tr>
 
@@ -143,7 +143,7 @@
                       <td class="no-line"><strong>Grand Total</strong></td>
                       <td class="no-line">
                         {{ currency.symbol }} 
-                        {{ (Number(order.shipping_amount) + Number(order.total_amount) - Number(order.coupon_discount) | formatPrice }}
+                        {{ formatPrice(Number(order.shipping_amount || 0) + Number(order.total_amount || 0) - Number(order.coupon_discount || 0)) }}
                       </td>
                     </tr>
                   </tbody>
@@ -194,16 +194,16 @@
                     </td>
                     <td>{{ value.quantity }}</td>
                     <td>
-                      {{ currency.symbol }} {{ value.selling_price | formatPrice }}
+                      {{ currency.symbol }} {{ formatPrice(value.selling_price) }}
                       <span
                         v-if="Number(value.unit_discount) > 0"
                         class="discount-price"
                       >
-                        {{ currency.symbol }} {{ (Number(value.selling_price) + Number(value.unit_discount)) | formatPrice }}
+                        {{ currency.symbol }} {{ formatPrice(Number(value.selling_price || 0) + Number(value.unit_discount || 0)) }}
                       </span>
                     </td>
                     <td>
-                      {{ currency.symbol }} {{ value.total_selling_price | formatPrice }}
+                      {{ currency.symbol }} {{ formatPrice(value.total_selling_price) }}
                     </td>
                   </tr>
                 </table>
@@ -244,6 +244,7 @@
         </div>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup>
@@ -261,6 +262,9 @@ const props = defineProps({
 
 // ✅ Convert Object props to refs so they work in <script setup>
 const { currency } = toRefs(props);
+
+// ✅ Helpers from mixin
+const { formatPrice, dateToString: formatDate } = useMixin();
 
 // ✅ Reactive State
 const order = ref({});

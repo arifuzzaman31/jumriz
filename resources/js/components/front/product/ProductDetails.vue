@@ -362,8 +362,8 @@
 <script>
 import { EventBus } from "../../../vue-assets";
 import { useMixin } from "../../../mixin";
-import SingleProduct from "./SingleProduct";
-import { useCartStore, storeToRefs } from '../../../../store/index';
+import SingleProduct from "./SingleProduct.vue";
+import { useCartStore, storeToRefs } from '../../../store/index.js';
 
 export default {
   props: ["currency", "product","shop_info"],

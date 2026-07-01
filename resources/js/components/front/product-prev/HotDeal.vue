@@ -46,7 +46,7 @@
       <script>
 import { EventBus } from "../../../vue-assets";
 import { useMixin } from "../../../mixin";
-import SingleProduct from "./SingleProduct";
+import SingleProduct from "./SingleProduct.vue";
 import { Carousel, Slide } from "vue-carousel";
 
 export default {

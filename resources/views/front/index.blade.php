@@ -22,119 +22,13 @@
 
 @endsection
 @section('content')
-<!-- slider  -->
-@if($shop_info->slider_status === 1)
-@php
-$sliders = homeSlider();
-@endphp
-<div class="container-fluid">
-  <div class="row">
-    <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-      <ol class="carousel-indicators">
-        @if(count($sliders) > 0)
-        @php $i = 0 @endphp
-        @foreach($sliders as $slider)
-        <li data-target="#carouselExampleIndicators" data-slide-to="{{ $i }}" class="@if($loop->first) active @endif"></li>
-        @php $i++ @endphp
-        @endforeach
-        @endif
-      </ol>
-      <div class="carousel-inner">
-        @if(count($sliders) > 0)
-        @foreach($sliders as $slider)
-        <div class="carousel-item @if($loop->first) active @endif">
-          <a href="{{ $slider->back_link_url }}"><img class="d-block w-100" src="{{ url('images/slider/'.$slider->slider_image) }}" alt="{{ $slider->title }}"></a>
-        </div>
-        @endforeach
-        @endif
-        <!-- <div class="carousel-item">
-      <a href=""><img class="d-block w-100" src="{{ url('images/slider/4.png') }}" alt="Second slide"></a>
-    </div> -->
-      </div>
-      <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
-        <span class="carousel-control-prev-icon theme-background" aria-hidden="true"><i class="lni lni-arrow-left color-white"></i></span>
-        <span class="sr-only">Previous</span>
-      </a>
-      <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
-        <span class="carousel-control-next-icon theme-background" aria-hidden="true"><i class="lni lni-arrow-right color-white"></i></span>
-        <span class="sr-only">Next</span>
-      </a>
-    </div>
-  </div>
-</div>
-@endif
-<!-- slider  -->
-@php
-$categories = frontCategory();
-@endphp
-<!-- home category from js  -->
-<div class="container">
-  <div class="row category">
-    <div class="col-md-12">
-      <div class="title mt50 mb30">
-        <h4>Product Categories</h4>
-      </div>
-    </div>
-
-  </div>
-  <div class="row category home-category">
-    <!-- end service 1-->
-    @foreach($categories as $cat)
-    <div class="col-lg-2 col-sm-3 col-4">
-      <a href="{{ route('category.product',['id' => $cat->id,'slug' => str_replace(' ','-',$cat->category_name)]) }}" title="{{ $cat->category_name }}">
-        <div class="box">
-          <div class="content">
-
-            <img src="{{ url('images/category/icon/'.$cat->icon) }}" alt="{{ $cat->category_name }}" class="img-fluid">
-            <h3>{{ $cat->category_name }}</h3>
-
-          </div>
-        </div>
-      </a>
-    </div>
-    @endforeach
-  </div>
-
-  <!--             <div class="row" v-else>
-                <div class="col-md-12 text-center">
-                    <img :src="url+'images/loading.gif'">
-                </div>              
-            </div> -->
-
-</div>
-<!-- <home-category></home-category> -->
-<!-- home category from js  -->
-
-<!--  end category-->
-
 @php
 $currency = getCurrentCurrency();
-
 @endphp
-<search-product :currency="{{ $currency  }}"></search-product>
-
-<!--  start hot deal -->
-
-
-@if($shop_info->hot_deal_status == 1)
-<hot-deal :currency="{{ $currency }}"></hot-deal>
-@endif
-
-
-<!--start banner-->
-<div class="container">
-  <home-offers></home-offers>
-</div>
-<!--end banner-->
-
-
-<!--  end   hot deal -->
-@if($shop_info->onsale_status == 1)
-<!-- on slae  -->
-<product-by-category :currency="{{ $currency }}"></product-by-category>
-<!-- <on-sale-product :currency="{{ $currency }}"></on-sale-product> -->
-<!-- on slae  -->
-@endif
+<home-page 
+  :shop_info="{{ $shop_info }}"
+  :currency="{{ $currency }}"
+></home-page>
 
 <div class="mapouter">
   <div class="gmap_canvas">
@@ -143,7 +37,3 @@ $currency = getCurrentCurrency();
   </div>
 </div>
 @endsection
-
-@push('script')
-<script src="{{ asset('js/front.js') }}"></script>
-@endpush

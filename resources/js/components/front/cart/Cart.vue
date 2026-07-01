@@ -192,8 +192,8 @@
  <script>
    import {EventBus} from  '../../../vue-assets';
    import { useMixin } from  '../../../mixin';
-   import AnimatedNumber from "animated-number-vue";
-   import { useCartStore, storeToRefs } from '../../../../store/index';
+   import AnimatedNumber from "animated-number-vue3";
+   import { useCartStore, storeToRefs } from '../../../store/index.js';
 
    export default {
     mixins : [Mixin],
